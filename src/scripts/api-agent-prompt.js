@@ -25,9 +25,12 @@ function buildAgentPrompt(mdUrl) {
 function copyAgentPrompt() {
     const text = document.getElementById('apiAgentPromptText').textContent;
     navigator.clipboard.writeText(text).then(() => {
-        const icon = document.getElementById('apiBtnCopyPrompt').querySelector('i');
-        icon.className = 'bi bi-check2';
-        setTimeout(() => { icon.className = 'bi bi-copy'; }, 2000);
+        /* .copy-btn swaps its icon for a "Copied" pill through this one class - the same
+           control the rest of the portal uses. Rewriting the <i> class, as this did
+           before, would fight that markup. */
+        const btn = document.getElementById('apiBtnCopyPrompt');
+        btn.classList.add('copy-btn--copied');
+        setTimeout(() => { btn.classList.remove('copy-btn--copied'); }, 2000);
     });
 }
 
@@ -91,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dataEl) {
         try {
             const data = JSON.parse(dataEl.textContent);
+            /* MCP servers serve their markdown from /mcp/<handle>.md, APIs from
+               /api/<handle>.md - two separate routes. The segment comes from the page's
+               own apiAgentData; defaulting to 'api' keeps every existing caller that
+               omits it working unchanged. */
             const apiPath = data.apiPath || 'api';
             const mdUrl = window.location.origin + data.baseUrl + '/' + apiPath + '/' + data.apiHandle + '.md';
             _agentMdUrl = mdUrl;

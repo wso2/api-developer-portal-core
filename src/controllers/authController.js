@@ -295,29 +295,57 @@ const renderBillingPage = async (req, res) => {
             return res.status(404).send(html);
         }
         
+        /* The sidebar shows APIs and MCP Servers only for matching devportalMode values, and
+           config.devportalMode does not exist - it is per-organization, read from
+           ORG_CONFIG the way every other page reads it. Passing the undefined global here
+           is what made both nav items disappear on this page alone. */
+        const orgDetails = await adminDao.getOrganization(orgName);
+        const devportalMode = orgDetails.ORG_CONFIG?.devportalMode || constants.DEVPORTAL_MODE.DEFAULT;
+
         const templateContent = {
-            profile: {
-                name: req.user?.name || req.user?.email || 'User',
-                email: req.user?.email || req[constants.USER_ID],
-                firstName: req.user?.firstName || req.user?.name || 'User',
-                lastName: req.user?.lastName || '',
-                imageURL: req.user?.imageURL || '/images/default-avatar.png',
-                organization: orgName,
-                orgId: orgId,
-                isAdmin: req.user?.isAdmin || false,
-            },
+            /* The same profile object every other page passes. This page used to build its
+               own with a literal 'User' fallback, which is why a name appeared here and
+               nowhere else - the difference was this fallback, not the page. */
+            profile: req.isAuthenticated() ? req.user : null,
             baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-            devportalMode: config.devportalMode,
+            devportalMode: devportalMode,
             orgId: orgId,
             orgIdentifier: orgName
         };
 
-        const html = util.renderTemplate(
-            '../pages/billing/page.hbs',
-            './src/defaultContent/layout/main.hbs',
-            templateContent,
-            true
-        );
+        /* Themed like every other organization-scoped page, rather than through
+           renderTemplate's technical path.
+
+           renderTemplate reads the layout straight off disk and never touches the
+           /styles/ links inside it, so an organization that had uploaded a theme got the
+           default stylesheet on this page alone - its palette, fonts and header applied
+           everywhere except billing. The two branches below are the contract the API
+           flows, docs and listing pages all use:
+
+             - the organization uploaded its own layout/main.hbs, so render against that,
+               repointing /styles/ at the asset endpoint when it also uploaded styles;
+             - no custom layout, so renderTemplateFromAPI applies the same style rewrite
+               over the default layout.
+
+           billing.css stays under /technical-styles/ (see page.hbs) exactly as
+           manage-keys.css does: it is page structure, and every colour in it resolves
+           through tokens.css, so it picks up the organization's palette from the themed
+           main.css without being themable itself. */
+        const dbLayout = await util.loadLayoutFromAPI(orgId, viewName);
+        let html;
+        if (dbLayout) {
+            const templatePath = path.join(process.cwd(), 'src/defaultContent/pages/billing/page.hbs');
+            const templateResponse = fs.readFileSync(templatePath, constants.CHARSET_UTF8);
+            const styleContent = await adminDao.getOrgContent({
+                orgId: orgId, fileType: 'style', viewName: viewName, fileName: 'main.css'
+            });
+            const themedLayout = styleContent
+                ? dbLayout.replace(/\/styles\//g, `${constants.ROUTE.DEVPORTAL_ASSETS_BASE_PATH}${orgId}/views/${viewName}/layout?fileType=style&fileName=`)
+                : dbLayout;
+            html = await renderGivenTemplate(templateResponse, themedLayout, templateContent);
+        } else {
+            html = await util.renderTemplateFromAPI(templateContent, orgId, orgName, 'pages/billing', viewName);
+        }
         res.send(html);
     } catch (error) {
         logger.error('Error rendering billing page', { 

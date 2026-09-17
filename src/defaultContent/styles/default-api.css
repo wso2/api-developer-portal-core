@@ -1,3 +1,8 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 .defaultapi-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -19,7 +24,7 @@
   border-radius: 8px;
   margin-bottom: 15px;
   margin-right: 2rem;
-  border-left: 4px solid var(--primary-light-color);
+  border-left: 4px solid var(--primary-light);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
   position: relative;
@@ -45,7 +50,7 @@
 
 .defaultapi-development-label {
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--ink);
   margin-bottom: 8px;
   font-size: 14px;
 }
@@ -59,7 +64,7 @@
 
 .defaultapi-endpoint-url {
   font-family: var(--font-family-mono);
-  color: var(--main-text-color);
+  color: var(--ink);
   font-size: 15px;
   flex-grow: 1;
   overflow: hidden;
@@ -68,7 +73,7 @@
 
 .defaultapi-description {
   line-height: 1.7;
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
   margin-bottom: 20px;
 }
@@ -170,7 +175,7 @@
 .defaultapi-http-method {
   padding: 6px 12px;
   border-radius: 4px;
-  color: var(--light-text-color);
+  color: var(--white);
   font-weight: 500;
   font-size: 14px;
   min-width: 80px;
@@ -217,7 +222,7 @@
 }
 
 .defaultapi-resource-description {
-  color: var(--main-text-color);
+  color: var(--ink);
   opacity: 0.7;
   font-size: 14px;
   flex-grow: 1;
@@ -319,11 +324,11 @@
 
 .api-span-tag {
   opacity: 0.7;
-  border: 1px solid var(--main-text-color);
+  border: 1px solid var(--ink);
   display: inline-block;
   margin: 2px;
   padding: 2px 8px;
-  background-color: var(--main-bg-color);
+  background-color: var(--surface);
   border-radius: 5px;
   font-size: 0.875rem;
   transition: background-color 0.2s ease;

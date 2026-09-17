@@ -2,15 +2,15 @@
 {{#if enabled}}
 {{#each applicationKeys}}
 <div class="modal custom-modal" id='keysModifyModal-{{keyType}}'>
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content custom-modal-content">
-            <div class="custom-modal-header">
-                <h2 class="custom-modal-title m-0">Modify Credentials ({{keyType}})</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                    onclick="closeModal('keysModifyModal-{{keyType}}')"></button>
+    <div class="modal-dialog dp-modal-dialog--lg" role="document">
+        <div class="modal-content custom-modal-content dp-modal">
+            <div class="custom-modal-header dp-modal-head">
+                <h2 class="custom-modal-title dp-modal-title m-0">Modify Credentials ({{keyType}})</h2>
+                <button type="button" class="dp-modal-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="closeModal('keysModifyModal-{{keyType}}')"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="custom-modal-body">
-                <div id="keyUpdateErrorContainer-{{keyType}}" class="alert alert-danger small" style="display: none;"></div>
+                <div id="keyUpdateErrorContainer-{{keyType}}" class="dp-note dp-note--danger" style="display: none;"></div>
         
                 <div class="container">
                     {{!-- Advanced configurations section --}}
@@ -146,10 +146,10 @@
                         </form>
                         <!-- Add Update configuration button when consumer key exists -->
                         <div class="d-flex justify-content-end mt-4 mb-3" id="applicationKeyUpdateButtonContainer-{{keyType}}">
-                            <button class="common-btn-outlined pr-3 me-3" type="button" onClick="closeModal('keysModifyModal-{{keyType}}')">
+                            <button class="dp-btn dp-btn--outline me-3" type="button" onClick="closeModal('keysModifyModal-{{keyType}}')">
                                 Cancel
                             </button>
-                            <button class="common-btn-primary" id="applicationKeyUpdateButton-{{keyType}}" name="http-values"
+                            <button class="dp-btn dp-btn--primary" id="applicationKeyUpdateButton-{{keyType}}" name="http-values"
                                 type="submit" form="applicationKeyGenerateForm-{{../id}}-{{keyType}}">
                                 Update
                             </button>

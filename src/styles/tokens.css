@@ -1,0 +1,201 @@
+/*
+ * Design tokens for the developer portal.
+ * Served at /technical-styles/tokens.css.
+ *
+ * WHY THIS FILE EXISTS, AND WHY IT IS NOT IN THE THEME
+ * ----------------------------------------------------
+ * The theme's own :root (src/defaultContent/styles/main.css) is owned by the Bijira
+ * Console. Three of its paths replace that block wholesale rather than merging into
+ * it: Save rebuilds it from a line-by-line parse, Reset writes a fixed 21-key
+ * literal, and AI theming writes a hardcoded 18-key map. Anything we added there
+ * would be erased the first time a customer touched the console.
+ *
+ * So the theme keeps exactly its established seed tokens - the ones the console's
+ * colour pickers write and src/scripts/common.js reads - and the whole design-system
+ * vocabulary lives here instead, where the console never looks.
+ *
+ * HOW THE TWO LAYERS MEET
+ * -----------------------
+ * Each alias below reads a seed with a literal fallback:
+ *
+ *     --primary: var(--primary-main-color, #1A4C6D);
+ *
+ * Custom properties resolve at computed-value time, not parse time, so it does not
+ * matter that the seeds are defined in a different stylesheet loaded later. A
+ * customer who recolours their portal in the console still re-themes this entire
+ * system for free; an organization whose stored theme predates a token falls back to
+ * the literal instead of rendering nothing.
+ *
+ * Unlike the theme's :root, this file is never parsed by the console - multi-line
+ * values and comments are safe here.
+ */
+
+:root {
+
+    /* ------------------------------------------------------------------
+       BRAND - aliases onto the seeds the console's colour pickers write.
+       ------------------------------------------------------------------ */
+
+    --primary: var(--primary-main-color, #1A4C6D);
+    --primary-dark: var(--primary-dark-color, #043556);
+    --primary-light: var(--primary-light-color, #2b719f);
+
+    --accent: var(--secondary-main-color, #FE8C3A);
+    --accent-light: var(--secondary-light-color, #FEAF76);
+    /* No seed for the deep accent - the console derives only a lighter one. */
+    --accent-dark: #ef4223;
+
+    /* ------------------------------------------------------------------
+       FOUNDATION - the neutral ramp is generated from these two.
+       ------------------------------------------------------------------ */
+
+    --ink: var(--main-text-color, #40404b);
+    --surface: var(--main-bg-color, #ffffff);
+    /* Kept distinct from --surface: this is white on a coloured or dark ground. */
+    --white: var(--white-color, #ffffff);
+
+    /* ------------------------------------------------------------------
+       SEMANTIC - independent of the brand.
+       ------------------------------------------------------------------ */
+
+    --success: var(--success-color, #28a745);
+    --warning: var(--warning-color, #ffc107);
+    --danger: var(--danger-color, #a40e26);
+    /* No seed for informational blue. */
+    --info: #0277bd;
+
+    /* ------------------------------------------------------------------
+       DERIVED - text and neutrals, mixed from --ink toward --surface.
+       ------------------------------------------------------------------ */
+
+    --text-strong: var(--ink);
+    --text: color-mix(in srgb, var(--ink) 80%, var(--surface));
+    --text-muted: color-mix(in srgb, var(--ink) 52%, var(--surface));
+    --text-subtle: color-mix(in srgb, var(--ink) 38%, var(--surface));
+
+    --border: color-mix(in srgb, var(--ink) 12%, var(--surface));
+    --border-strong: color-mix(in srgb, var(--ink) 22%, var(--surface));
+    --surface-sunken: color-mix(in srgb, var(--ink) 4%, var(--surface));
+    --overlay: color-mix(in srgb, var(--ink) 55%, transparent);
+
+    /* ------------------------------------------------------------------
+       DERIVED - brand families.
+       ------------------------------------------------------------------ */
+
+    --ink-deep: color-mix(in srgb, var(--primary) 55%, #000);
+    --primary-surface: color-mix(in srgb, var(--primary) 8%, var(--surface));
+    --focus-ring: color-mix(in srgb, var(--primary) 40%, transparent);
+
+    --accent-surface: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    /* Runs to --accent, not --accent-light. Upstream's "accent-light" (#ff8636) is within
+       a few units of its accent (#fe8c3a) - it has no genuinely lighter tint, so its CTA
+       effectively runs accent-dark -> accent. Ours does have a real lighter tint
+       (#FEAF76, the --secondary-light-color seed a customer picks in the console), and
+       ending on it washed the button out to peach. Using --accent keeps the seed
+       semantically a light tint while matching upstream's ramp. */
+    --cta-gradient: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
+
+    --success-surface: color-mix(in srgb, var(--success) 12%, var(--surface));
+    --warning-surface: color-mix(in srgb, var(--warning) 14%, var(--surface));
+    --danger-surface: color-mix(in srgb, var(--danger) 10%, var(--surface));
+    --info-surface: color-mix(in srgb, var(--info) 12%, var(--surface));
+
+    /* ------------------------------------------------------------------
+       DERIVED - the dark brand surface, and what sits on top of it.
+       Shared by the home hero and the sidebar.
+       ------------------------------------------------------------------ */
+
+    --surface-dark:
+        radial-gradient(56.25rem 37.5rem at 12% 8%, color-mix(in srgb, var(--primary-light) 42%, transparent), transparent 60%),
+        radial-gradient(43.75rem 37.5rem at 95% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%),
+        linear-gradient(160deg,
+            var(--primary-dark) 0%,
+            color-mix(in srgb, var(--primary-dark) 72%, #000) 60%,
+            color-mix(in srgb, var(--primary-dark) 58%, #000) 100%);
+
+    /* Depth for the home hero: two soft glows laid OVER the customer's own
+       --primary-gradient, never instead of it - the console's gradient picker writes
+       that token, and replacing it here would quietly disconnect the picker. */
+    --hero-glow:
+        radial-gradient(56.25rem 37.5rem at 12% 8%, color-mix(in srgb, var(--primary-light) 42%, transparent), transparent 60%),
+        radial-gradient(43.75rem 37.5rem at 95% 100%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%);
+
+    --on-dark: color-mix(in srgb, var(--white) 74%, transparent);
+    --on-dark-muted: color-mix(in srgb, var(--white) 52%, transparent);
+    --on-dark-fill: color-mix(in srgb, var(--white) 6%, transparent);
+    --on-dark-fill-border: color-mix(in srgb, var(--white) 12%, transparent);
+
+    --on-dark-pill: color-mix(in srgb, var(--primary-light) 60%, var(--white));
+    --on-dark-pill-bg: color-mix(in srgb, var(--primary-light) 16%, transparent);
+    --on-dark-pill-border: color-mix(in srgb, var(--primary-light) 34%, transparent);
+
+    /* ------------------------------------------------------------------
+       NON-COLOUR
+       --font-family-sans and --font-family-mono are deliberately absent: both
+       are already seeds in the theme's :root, and redefining a custom property
+       in terms of itself is a cycle, which resolves to nothing.
+       ------------------------------------------------------------------ */
+
+    --border-radius: 0.5rem;
+}
+
+/*
+ * FALLBACK FOR BROWSERS WITHOUT color-mix()
+ *
+ * Support floor: Chrome 111, Safari 16.2, Firefox 113.
+ *
+ * This block has to exist, and it has to be at the END of the file. The usual
+ * two-declaration idiom does NOT work for custom properties:
+ *
+ *     --text: #66666f;                                  <- intended fallback
+ *     --text: color-mix(in srgb, ...);                  <- always wins
+ *
+ * Custom property values are not validated at parse time, so an unsupported
+ * color-mix() is still accepted as a token value and only fails later, at
+ * computed-value time - by which point the earlier declaration is long gone and
+ * the property resolves to nothing. @supports is the only mechanism that can
+ * choose between them.
+ *
+ * The values below are the mixes above resolved against the DEFAULT palette. On a
+ * non-supporting browser a recoloured portal falls back to these rather than to the
+ * customer's hue - legible, not exact. Do not "simplify" this block away.
+ */
+@supports not (color: color-mix(in srgb, red, blue)) {
+    :root {
+        --text: #66666f;
+        --text-muted: #9c9ca1;
+        --text-subtle: #b6b6bb;
+
+        --border: #e8e8e9;
+        --border-strong: #d5d5d7;
+        --surface-sunken: #f7f7f8;
+        --overlay: rgba(64, 64, 75, 0.55);
+
+        --ink-deep: #0e2a3c;
+        --primary-surface: #edf1f3;
+        --focus-ring: rgba(26, 76, 109, 0.4);
+
+        --accent-surface: #fff1e7;
+        --success-surface: #e5f4e9;
+        --warning-surface: #fff6dc;
+        --danger-surface: #f6e7e9;
+        --info-surface: #e1eff7;
+
+        --surface-dark: linear-gradient(160deg, #043556 0%, #03263e 60%, #021f32 100%);
+
+        /* Same glows without color-mix. A gradient list cannot fall back to a plain
+           colour, so this has to stay a gradient or the hero loses its background. */
+        --hero-glow:
+            radial-gradient(56.25rem 37.5rem at 12% 8%, rgba(43, 113, 159, 0.42), transparent 60%),
+            radial-gradient(43.75rem 37.5rem at 95% 100%, rgba(254, 140, 58, 0.22), transparent 55%);
+
+        --on-dark: rgba(255, 255, 255, 0.74);
+        --on-dark-muted: rgba(255, 255, 255, 0.52);
+        --on-dark-fill: rgba(255, 255, 255, 0.06);
+        --on-dark-fill-border: rgba(255, 255, 255, 0.12);
+
+        --on-dark-pill: #80aac5;
+        --on-dark-pill-bg: rgba(43, 113, 159, 0.16);
+        --on-dark-pill-border: rgba(43, 113, 159, 0.34);
+    }
+}

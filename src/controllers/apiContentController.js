@@ -29,6 +29,7 @@ const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const apiMetadataService = require('../services/apiMetadataService');
 const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNavService');
+const { shouldShowMcpSubscriptionsNav } = require('../services/mcpSubscriptionsNavService');
 const adminService = require('../services/adminService');
 const apiFlowService = require('../services/apiFlowService');
 const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
@@ -106,7 +107,7 @@ const loadAPIs = async (req, res) => {
                             });
                             const subscriptionData = activeSubs.length > 0 ? {
                                 policyId: activeSubs[0].POLICY_ID,
-                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === activeSubs[0].POLICY_ID)?.policyName || 'Unknown'
+                                policyName: (metaData.subscriptionPolicies || []).find(p => p.policyID === activeSubs[0].POLICY_ID)?.policyName || 'Unknown'
                             } : null;
                             return {
                                 ...new ApplicationDTO(app),
@@ -255,6 +256,7 @@ const loadAPIContent = async (req, res) => {
             baseUrl: baseURLDev + viewName,
             schemaUrl: `${orgName}/mock/${apiHandle}/${schemaFileName}`,
             showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaData, null),
+            showMcpSubscriptionsNav: shouldShowMcpSubscriptionsNav(metaData),
         }
         html = renderTemplate(filePrefix + 'pages/api-landing/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         res.send(html);
@@ -424,14 +426,31 @@ const loadAPIContent = async (req, res) => {
                     appList = await Promise.all(
                         applications.map(async (app) => {
                             const subscription = await adminDao.getAppApiSubscription(orgID, app.APP_ID, metaData.apiID);
-                            const subscriptionData = subscription.length > 0 ? {
-                                policyId: subscription[0].POLICY_ID,
-                                policyName: metaData.subscriptionPolicies.find(p => p.policyID === subscription[0].POLICY_ID)?.policyName || 'Unknown'
+                            /* Only live subscriptions count, the same filter the listing page
+                               applies when it builds perApiAppList. A cancelled subscription
+                               must not go on blocking the application from being reused, and
+                               rows written before billing existed carry no PAYMENT_STATUS. */
+                            const activeSubs = subscription.filter(s => {
+                                const ps = s.PAYMENT_STATUS;
+                                return !ps || ps === 'ACTIVE';
+                            });
+                            const subscriptionData = activeSubs.length > 0 ? {
+                                policyId: activeSubs[0].POLICY_ID,
+                                policyName: (metaData.subscriptionPolicies || []).find(p => p.policyID === activeSubs[0].POLICY_ID)?.policyName || 'Unknown'
                             } : null;
+                            /* subscribed is API-level: true when this application holds any plan
+                               of this API. subscribedPolicyIds says which. One application may
+                               hold only one plan per API, so the plan cards read these two
+                               together - the plan in subscribedPolicyIds offers the way back to
+                               the subscription, every other plan card offers nothing. The table
+                               itself is keyed on (APP_ID, ORG_ID, API_ID, POLICY_ID) and would
+                               accept a second row, so the rule lives in the UI and in
+                               adminService.createSubscription rather than in a constraint. */
                             return {
                                 ...new ApplicationDTO(app),
-                                subscribed: subscription.length > 0,
-                                subscriptionPolicy: subscriptionData
+                                subscribed: activeSubs.length > 0,
+                                subscriptionPolicy: subscriptionData,
+                                subscribedPolicyIds: activeSubs.map(s => s.POLICY_ID)
                             };
                         })
                     );
@@ -467,9 +486,14 @@ const loadAPIContent = async (req, res) => {
             if (metaData.apiInfo.apiType === constants.API_TYPE.GRAPHQL) {
                 schemaFileName = constants.FILE_NAME.API_DEFINITION_GRAPHQL;
             }
+            /* Every plan any of this user's applications holds on this API - what turns a
+               plan card green, independent of which application it was. */
+            const subscribedPlanIds = [...new Set(appList.flatMap((a) => a.subscribedPolicyIds || []))];
+
             templateContent = {
                 isAuthenticated: req.isAuthenticated(),
                 applications: appList,
+                subscribedPlanIds: subscribedPlanIds,
                 provider: metaData.provider,
                 providerUrl: providerUrl,
                 apiMetadata: metaData,
@@ -488,6 +512,7 @@ const loadAPIContent = async (req, res) => {
                 isFederatedAPI: isFederatedAPI,
             };
             templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaData, apiDetail);
+            templateContent.showMcpSubscriptionsNav = shouldShowMcpSubscriptionsNav(metaData);
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
             } else {
@@ -580,10 +605,16 @@ const loadDocsPage = async (req, res) => {
         const templateContent = {
             apiMD: await loadMarkdown("api-doc.md", filePrefix + '../mock/' + apiHandle + "/" + docType),
             baseUrl: constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle,
+            /* Which nav entry the docs sidebar should mark active. The page had a .doc-link.active rule and nothing ever set the class, so the sidebar never showed where you were. */
+            currentDocType: req.params.docType || null,
+            currentDocName: req.params.docName || null,
             docTypes: docNames,
             devportalMode: devportalMode,
+            /* The name the documentation breadcrumb shows. It existed only as a local for the control-plane access check and never reached the template. */
+            apiName: apiMetadata.apiInfo?.apiName,
             apiType: apiMetadata.apiInfo?.apiType,
             showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null),
+            showMcpSubscriptionsNav: shouldShowMcpSubscriptionsNav(apiMetadata),
         }
         html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
     } else {
@@ -617,11 +648,17 @@ const loadDocsPage = async (req, res) => {
             };
             const templateContent = {
                 baseUrl: '/' + orgName + '/views/' + viewName + "/api/" + apiHandle,
+                /* Which nav entry the docs sidebar should mark active. The page had a .doc-link.active rule and nothing ever set the class, so the sidebar never showed where you were. */
+                currentDocType: req.params.docType || null,
+                currentDocName: req.params.docName || null,
                 docTypes: docNames,
+                /* The name the documentation breadcrumb shows. It existed only as a local for the control-plane access check and never reached the template. */
+                apiName: apiMetadata[0].dataValues.API_NAME,
                 apiType: apiType,
                 profile: req.isAuthenticated() ? profile : null,
                 devportalMode: devportalMode,
                 showPlatformApiKeysNav: await shouldShowPlatformApiKeysNav(req, metaForNav, null),
+                showMcpSubscriptionsNav: shouldShowMcpSubscriptionsNav(apiMetadata[0]),
             };
             html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
         } catch (error) {
@@ -663,6 +700,11 @@ const loadDocument = async (req, res) => {
         templateContent.apiType = definitionResponse.apiType;
         
         const tryoutEnabled = req.query.tryout ? true : false;
+        /* The two existing flags are per-type, so the docs sidebar cannot use either to
+           decide which nav entry is current. Both entries point at /docs/specification and
+           differ only by this query parameter, so without a type-agnostic flag the
+           "API Definition" entry stayed highlighted on the Tryout page. */
+        templateContent.isTryoutPage = tryoutEnabled;
         if (definitionResponse.apiType === constants.API_TYPE.WS || definitionResponse.apiType === constants.API_TYPE.WEBSUB) {
             templateContent.isWebSocketTryout = tryoutEnabled;
         } else if (definitionResponse.apiType === constants.API_TYPE.GRAPHQL) {
@@ -846,13 +888,20 @@ const loadDocument = async (req, res) => {
             }
             templateContent.baseUrl = constants.BASE_URL + config.port + "/views/" + viewName + "/api/" + apiHandle;
             templateContent.docTypes = docNames;
+            /* Which nav entry the docs sidebar should mark active. The page had a .doc-link.active rule and nothing ever set the class, so the sidebar never showed where you were. */
+            templateContent.currentDocType = req.params.docType || null;
+            templateContent.currentDocName = req.params.docName || null;
+            templateContent.isSpecPage = !req.params.docName;
             templateContent.apiMD = apiMD;
             templateContent.apiType = apiMetadata.apiInfo?.apiType;
+            /* The name the documentation breadcrumb shows. It existed only as a local for the control-plane access check and never reached the template. */
+            templateContent.apiName = apiMetadata.apiInfo?.apiName;
             const metaForNav = {
                 apiInfo: { gatewayType: apiMetadata.apiInfo?.gatewayType },
                 apiReferenceID: apiMetadata.apiReferenceID,
             };
             templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaForNav, null);
+            templateContent.showMcpSubscriptionsNav = shouldShowMcpSubscriptionsNav(apiMetadata);
             html = renderTemplate(filePrefix + 'pages/docs/page.hbs', filePrefix + 'layout/main.hbs', templateContent, false);
         } else {
 
@@ -871,6 +920,10 @@ const loadDocument = async (req, res) => {
                 templateContent.baseUrl = '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName;
                 templateContent.baseDocUrl = baseDocUrl;                
                 templateContent.docTypes = docNames;
+                /* Which nav entry the docs sidebar should mark active. The page had a .doc-link.active rule and nothing ever set the class, so the sidebar never showed where you were. */
+                templateContent.currentDocType = req.params.docType || null;
+                templateContent.currentDocName = req.params.docName || null;
+                templateContent.isSpecPage = !req.params.docName;
                 let profile = null;
                 if (req.user) {
                     profile = {
@@ -882,6 +935,8 @@ const loadDocument = async (req, res) => {
                 }
                 templateContent.profile = req.isAuthenticated() ? profile : null;
                 templateContent.apiType = apiType;
+                /* The name the documentation breadcrumb shows. It existed only as a local for the control-plane access check and never reached the template. */
+                templateContent.apiName = apiMetadata[0].dataValues.API_NAME;
                 templateContent.devportalMode = devportalMode;
                 const row = apiMetadata[0].dataValues;
                 const metaForNav = {
@@ -889,6 +944,7 @@ const loadDocument = async (req, res) => {
                     apiReferenceID: row.REFERENCE_ID,
                 };
                 templateContent.showPlatformApiKeysNav = await shouldShowPlatformApiKeysNav(req, metaForNav, null);
+                templateContent.showMcpSubscriptionsNav = shouldShowMcpSubscriptionsNav(apiMetadata[0]);
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/docs", viewName);
             } catch (error) {
                 const templateContent = {

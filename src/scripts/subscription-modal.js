@@ -86,125 +86,148 @@ async function prepareSubscriptionModal(modalId) {
         // expose token meta and org id for other helpers
         window.__subscriptionOrgID = window.__subscriptionOrgID || orgID;
 
-        // Render existing subscriptions table
+        /* Render existing subscriptions as the same label-left/value-right cards
+           api-subscription-plans.hbs emits, using the builders in platform-subscription.js
+           (both scripts are loaded together on the listing and landing pages). This runs
+           on every open and after every mutation, so emitting the retired four-column
+           table here made the panel snap back to the old design mid-flow. */
         if (existing && existing.length > 0) {
-            const table = document.createElement('table');
-            table.className = 'table mb-3';
-            table.innerHTML = `
-                <thead>
-                    <tr>
-                        <th>Plan</th>
-                        <th>Status</th>
-                        <th>Subscription Token</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            `;
-            const tbody = table.querySelector('tbody');
+            const header = document.createElement('div');
+            header.className = 'aov-section-header';
+            header.innerHTML = '<h2 class="aov-section-title">Subscriptions</h2>';
+            platformContainer.appendChild(header);
+
+            const list = document.createElement('div');
+            list.className = 'aov-sub-list mb-3';
+
             existing.forEach(sub => {
                 // store masked token meta
                 window.__tokenMeta = window.__tokenMeta || {};
                 window.__tokenMeta[sub.subscriptionId] = { maskedToken: sub.maskedToken, subscriptionPlanName: sub.subscriptionPlanName, status: sub.status };
 
-                const tr = document.createElement('tr');
+                const isActive = sub.status === 'ACTIVE';
+                const card = document.createElement('div');
+                card.className = 'aov-plan-card aov-sub-card';
 
-                // Plan name cell
-                const tdPlan = document.createElement('td');
-                tdPlan.textContent = sub.subscriptionPlanName || '';
-                tr.appendChild(tdPlan);
+                card.appendChild(buildSubRow('Plan', document.createTextNode(sub.subscriptionPlanName || '')));
 
-                // Status cell
-                const tdStatus = document.createElement('td');
-                const statusBadge = document.createElement('span');
-                statusBadge.className = 'badge ' + (sub.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary');
-                statusBadge.textContent = sub.status || '';
-                tdStatus.appendChild(statusBadge);
-                tr.appendChild(tdStatus);
+                const pill = document.createElement('span');
+                pill.className = 'sub-status-pill ' + (isActive ? 'sub-status-pill--active' : 'sub-status-pill--inactive');
+                const dot = document.createElement('span');
+                dot.className = 'sub-status-dot';
+                pill.appendChild(dot);
+                pill.appendChild(document.createTextNode(sub.status || ''));
+                card.appendChild(buildSubRow('Status', pill));
 
-                // Token cell
-                const tdToken = document.createElement('td');
-                const tokenDisplay = document.createElement('div');
-                tokenDisplay.className = 'token-display';
                 const tokenCode = document.createElement('code');
                 tokenCode.className = 'masked-token';
                 tokenCode.id = 'token-' + sub.subscriptionId;
                 tokenCode.dataset.revealed = 'false';
                 tokenCode.textContent = '****';
-                const revealBtn = document.createElement('button');
-                revealBtn.className = 'btn btn-sm btn-outline-secondary';
-                revealBtn.title = 'Reveal token';
-                revealBtn.innerHTML = '<i class="bi bi-eye"></i>';
-                revealBtn.dataset.subscriptionId = sub.subscriptionId;
-                revealBtn.addEventListener('click', function() { toggleTokenVisibility(this.dataset.subscriptionId); });
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-sm btn-outline-secondary';
-                copyBtn.title = 'Copy token';
-                copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
-                copyBtn.dataset.subscriptionId = sub.subscriptionId;
-                copyBtn.addEventListener('click', function() { copySubscriptionToken(this.dataset.subscriptionId); });
-                tokenDisplay.appendChild(tokenCode);
-                tokenDisplay.appendChild(revealBtn);
-                tokenDisplay.appendChild(copyBtn);
-                tdToken.appendChild(tokenDisplay);
-                tr.appendChild(tdToken);
 
-                // Actions cell
-                const tdActions = document.createElement('td');
-                const newStatus = sub.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                const tokenRow = buildSubRow('Subscription token', tokenCode, 'aov-sub-row--token');
+                const tokenValue = tokenRow.querySelector('.aov-sub-value');
+                tokenValue.appendChild(buildSubIconBtn('bi-eye', 'Reveal token', sub.subscriptionId, function(id) {
+                    toggleTokenVisibility(id);
+                }));
+                tokenValue.appendChild(buildSubIconBtn('bi-clipboard', 'Copy token', sub.subscriptionId, function(id) {
+                    copySubscriptionToken(id);
+                }));
+                card.appendChild(tokenRow);
+
+                const actions = document.createElement('div');
+                actions.className = 'aov-sub-actions';
+
                 const toggleBtn = document.createElement('button');
-                toggleBtn.className = 'btn btn-sm btn-outline-warning';
-                toggleBtn.innerHTML = sub.status === 'ACTIVE' ? '<i class="bi bi-pause-circle"></i>' : '<i class="bi bi-play-circle"></i>';
+                toggleBtn.type = 'button';
+                toggleBtn.className = 'dp-btn dp-btn--outline';
+                toggleBtn.title = isActive ? 'Deactivate' : 'Activate';
+                toggleBtn.innerHTML = isActive
+                    ? '<i class="bi bi-pause-circle"></i> Deactivate'
+                    : '<i class="bi bi-play-circle"></i> Activate';
                 toggleBtn.dataset.orgId = orgID;
                 toggleBtn.dataset.subscriptionId = sub.subscriptionId;
-                toggleBtn.dataset.newStatus = newStatus;
+                toggleBtn.dataset.newStatus = isActive ? 'INACTIVE' : 'ACTIVE';
                 if (window.isReadOnly) toggleBtn.disabled = true;
                 toggleBtn.addEventListener('click', function() {
                     togglePlatformSubscriptionStatus(this.dataset.orgId, this.dataset.subscriptionId, this.dataset.newStatus);
                 });
+                actions.appendChild(toggleBtn);
+
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-outline-danger';
-                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'dp-btn dp-btn--danger';
+                deleteBtn.title = 'Delete';
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Unsubscribe';
                 deleteBtn.dataset.orgId = orgID;
                 deleteBtn.dataset.subscriptionId = sub.subscriptionId;
                 if (window.isReadOnly) deleteBtn.disabled = true;
                 deleteBtn.addEventListener('click', function() {
                     confirmDeletePlatformSubscription(this.dataset.orgId, this.dataset.subscriptionId);
                 });
-                tdActions.appendChild(toggleBtn);
-                tdActions.appendChild(deleteBtn);
-                tr.appendChild(tdActions);
+                actions.appendChild(deleteBtn);
 
-                tbody.appendChild(tr);
+                card.appendChild(actions);
+                list.appendChild(card);
             });
-            platformContainer.appendChild(table);
+
+            platformContainer.appendChild(list);
         }
 
         // Render subscription plans from CP if available
         if (plans && plans.length > 0) {
-            const header = document.createElement('div');
-            header.className = 'container-header mb-3';
-            header.textContent = 'Subscription Plans';
-            platformContainer.appendChild(header);
+            const plansHeader = document.createElement('div');
+            plansHeader.className = 'aov-section-header';
+            plansHeader.innerHTML = '<h2 class="aov-section-title">Subscription Plans</h2>';
+            platformContainer.appendChild(plansHeader);
 
             const row = document.createElement('div');
             row.className = 'row row-gap-4 justify-content-center';
             plans.forEach(plan => {
                 const col = document.createElement('div');
                 col.className = 'col-xl-3 col-lg-4 col-md-6 col-12';
+                /* Same aov-plan-card the template renders for non-platform plans, so a
+                   platform plan injected here is indistinguishable from one rendered
+                   server-side. Previously this built the older card dev-card markup, which
+                   is why the modal could show two different plan cards side by side. */
+                const rawRate = plan.requestCount || plan.rate;
+                const unlimited = rawRate === '' || rawRate === null || rawRate === undefined ||
+                    String(rawRate) === '0' || String(rawRate) === '-1' ||
+                    String(rawRate).toLowerCase() === 'unlimited';
                 col.innerHTML = `
-                    <div class="card dev-card subscription-card">
-                        <div class="card-body align-items-center text-center p-0">
-                            <span class="subscription-plans-card-title">${escapeHtml(plan.displayName || plan.subscriptionPlanName || '')}</span>
-                            <h1 class="subscription-plans-request-count">${escapeHtml(String(plan.requestCount || plan.rate || ''))}</h1>
-                            <p class="subscription-plans-card-subtitle pt-0">requests per minute</p>
+                    <div class="aov-plan-card subscription-card">
+                        <div class="aov-plan-ribbon" aria-hidden="true">
+                            <div class="aov-plan-ribbon-label api-ribbon-label">SUBSCRIBED</div>
+                        </div>
+                        <div class="aov-plan-body">
+                            <div class="aov-plan-card-head">
+                                <div class="aov-plan-name-row">
+                                    <span class="aov-plan-icon" style="background: var(--surface-sunken); color: var(--primary);">
+                                        <i class="bi bi-lightning-charge-fill"></i>
+                                    </span>
+                                    <span class="aov-plan-name">${escapeHtml(plan.displayName || plan.subscriptionPlanName || '')}</span>
+                                </div>
+                            </div>
+                            <div class="plan-kpis">
+                                <div class="plan-kpi-row">
+                                    <div class="plan-kpi-label">Rate limit</div>
+                                    <div class="plan-kpi-valueTop">
+                                        ${unlimited
+                                            ? '<span class="plan-kpi-amount" title="Unlimited">&infin;</span>'
+                                            : `<span class="plan-kpi-amount">${escapeHtml(String(rawRate))}</span>`}
+                                        <span class="plan-kpi-unit">req/min</span>
+                                    </div>
+                                    <div class="plan-kpi-labelSub"></div>
+                                    <div class="plan-kpi-valueSub"><span class="plan-kpi-badge-placeholder">&nbsp;</span></div>
+                                </div>
+                            </div>
                         </div>
                         <div class="position-relative">
                             <div class="message-overlay hidden"><div class="message-content"><i class="bi message-icon"></i><p class="message-text"></p></div><button type="button" class="close-message" aria-label="Close">&times;</button></div>
                         </div>
                     </div>
                 `;
-                const card = col.querySelector('.card');
+                const card = col.querySelector('.aov-plan-card');
                 const btn = document.createElement('button');
                 btn.className = 'common-btn-primary subscribe-btn w-100';
                 btn.textContent = 'Subscribe';
@@ -257,13 +280,16 @@ async function prepareSubscriptionModal(modalId) {
             });
 
             if (existing && existing.length > 0) {
-                var activePlanNames = existing
-                    .filter(function(s) { return s.status === 'ACTIVE'; })
+                /* Any status: a deactivated subscription is still the plan this
+                   application holds, and this gateway allows one per API. Filtering to
+                   ACTIVE here offered "Subscribe" for a plan already subscribed, which
+                   the landing card did too - see refreshLandingPageSubscriptions. */
+                var subscribedPlanNames = existing
                     .map(function(s) { return (s.subscriptionPlanName || '').toLowerCase(); });
 
                 planBtns.forEach(function(btn) {
                     var policyName = (btn.dataset.policyName || '').toLowerCase();
-                    if (activePlanNames.indexOf(policyName) !== -1) {
+                    if (subscribedPlanNames.indexOf(policyName) !== -1) {
                         btn.textContent = 'Current Plan';
                         btn.disabled = true;
                         btn.classList.add('disabled');

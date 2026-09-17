@@ -1,5 +1,5 @@
 {{#if platformApiKeysLoadError}}
-<div class="alert alert-danger" role="alert">
+<div class="dp-error-box" role="alert">
     <strong>Unable to load API keys.</strong> The control plane did not return the key list for this API. Refresh the page or try again later. Generate, regenerate, and revoke are disabled until the list loads successfully.
 </div>
 {{else}}
@@ -12,46 +12,52 @@
 </div>
 {{/if}}
 {{#if platformApiKeys.length}}
-<div class="app-table-container platform-api-keys-table-wrap my-3">
-    <table class="app-table" id="platform-api-keys-table">
+{{!-- The sub-table family, so this page and /subscriptions render one table. app-table
+          is the older idiom with a tinted header band and lives on other pages; both were
+          on screen a click apart. subscriptions.css is already linked by page.hbs. --}}
+<div class="sub-tablewrap platform-api-keys-table-wrap my-3">
+    <div class="sub-scroll table-responsive">
+    <table class="sub-table" id="platform-api-keys-table">
         <thead>
             <tr>
-                <th class="app-th">Name</th>
-                <th class="app-th">Key</th>
-                <th class="app-th">Status</th>
-                <th class="app-th">Expires</th>
-                <th class="app-th" style="min-width: 280px;">Key Actions</th>
+                <th>Name</th>
+                <th>Key</th>
+                <th>Status</th>
+                <th>Expires</th>
+                <th style="min-width: 280px;">Key Actions</th>
             </tr>
         </thead>
         <tbody>
             {{#each platformApiKeys}}
             <tr class="data-row" id="platform-key-row-{{@index}}">
-                <td class="app-td">{{this.name}}</td>
-                <td class="app-td">
+                <td>{{this.name}}</td>
+                <td>
                     <code class="masked-api-key">{{this.maskedApiKey}}</code>
                 </td>
-                <td class="app-td">
-                    <span class="badge {{#if (eq this.status 'active')}}bg-success{{else}}bg-secondary{{/if}}">{{this.status}}</span>
+                <td>
+                    <span class="sub-status-pill {{#if (eq this.status 'active')}}sub-status-pill--active{{else}}sub-status-pill--inactive{{/if}}">
+                        <span class="sub-status-dot"></span>{{this.status}}
+                    </span>
                 </td>
-                <td class="app-td">
+                <td>
                     {{#if this.expiresAt}}
                     <span class="text-nowrap">{{formatExpiresAt this.expiresAt}}</span>
                     {{else}}
                     <span class="text-muted">&mdash;</span>
                     {{/if}}
                 </td>
-                <td class="app-td">
+                <td>
                     {{#unless @root.isReadOnlyMode}}
                     <div class="api-key-actions">
                         <button type="button"
-                            class="common-btn-outlined btn-sm me-1 btn-regenerate-key {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                            class="dp-btn dp-btn--outline btn-regenerate-key {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                             data-key-id="{{this.name}}" data-key-name="{{this.name}}">
                             <span class="button-normal-state">
                                 <i class="bi bi-key me-1"></i> Regenerate
                             </span>
                         </button>
                         <button type="button"
-                            class="common-btn-outlined btn-sm api-key-revoke btn-revoke-key {{#if @root.isReadOnlyMode}}disabled{{/if}}"
+                            class="dp-btn dp-btn--danger api-key-revoke btn-revoke-key {{#if @root.isReadOnlyMode}}disabled{{/if}}"
                             data-key-id="{{this.name}}">
                             <span class="button-normal-state">
                                 <i class="bi bi-key me-1"></i> Revoke
@@ -66,6 +72,7 @@
             {{/each}}
         </tbody>
     </table>
+    </div>
 </div>
 {{/if}}
 
@@ -73,25 +80,25 @@
 {{#unless isReadOnlyMode}}
 <div class="modal fade" id="generatePlatformApiKeyModal" tabindex="-1" aria-labelledby="generatePlatformApiKeyModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="generatePlatformApiKeyModalLabel">Generate API Key</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content ak-modal">
+            <div class="modal-header ak-modal-head">
+                <h5 class="modal-title ak-modal-title" id="generatePlatformApiKeyModalLabel">Generate API Key</h5>
+                <button type="button" class="ak-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="platform-api-key-name" class="form-label">Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="platform-api-key-name" placeholder="my-key-01" autocomplete="off" />
-                    <div class="form-text">Lowercase letters, numbers, hyphens and underscores (URL-safe).</div>
+            <div class="modal-body ak-modal-body">
+                <div class="ak-form-group">
+                    <label for="platform-api-key-name" class="ak-form-label">Name <span class="text-danger">*</span></label>
+                    <input type="text" class="ak-form-input" id="platform-api-key-name" placeholder="my-key-01" autocomplete="off" />
+                    <div class="ak-form-hint">Lowercase letters, numbers, hyphens and underscores (URL-safe).</div>
                 </div>
-                <div class="mb-0">
-                    <label for="platform-api-key-expires" class="form-label">Expires at (optional)</label>
-                    <input type="datetime-local" class="form-control" id="platform-api-key-expires" />
+                <div class="ak-form-group">
+                    <label for="platform-api-key-expires" class="ak-form-label">Expires at (optional)</label>
+                    <input type="datetime-local" class="ak-form-input ak-form-input--date" id="platform-api-key-expires" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="common-btn-primary btn-sm" id="btn-submit-generate-platform-api-key">Generate</button>
+            <div class="modal-footer ak-modal-footer">
+                <button type="button" class="dp-btn dp-btn--outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="dp-btn dp-btn--primary" id="btn-submit-generate-platform-api-key">Generate</button>
             </div>
         </div>
     </div>
@@ -99,26 +106,26 @@
 
 <div class="modal fade" id="regeneratePlatformApiKeyModal" tabindex="-1" aria-labelledby="regeneratePlatformApiKeyModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="regeneratePlatformApiKeyModalLabel">Regenerate API Key</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content ak-modal">
+            <div class="modal-header ak-modal-head">
+                <h5 class="modal-title ak-modal-title" id="regeneratePlatformApiKeyModalLabel">Regenerate API Key</h5>
+                <button type="button" class="ak-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body ak-modal-body">
                 <p class="small text-muted">The previous key will stop working immediately after regeneration.</p>
                 <input type="hidden" id="regenerate-platform-key-id" value="" />
-                <div class="mb-3">
-                    <label for="regenerate-platform-api-key-name" class="form-label">Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="regenerate-platform-api-key-name" autocomplete="off" />
+                <div class="ak-form-group">
+                    <label for="regenerate-platform-api-key-name" class="ak-form-label">Name <span class="text-danger">*</span></label>
+                    <input type="text" class="ak-form-input" id="regenerate-platform-api-key-name" autocomplete="off" />
                 </div>
-                <div class="mb-0">
-                    <label for="regenerate-platform-api-key-expires" class="form-label">Expires at (optional)</label>
-                    <input type="datetime-local" class="form-control" id="regenerate-platform-api-key-expires" />
+                <div class="ak-form-group">
+                    <label for="regenerate-platform-api-key-expires" class="ak-form-label">Expires at (optional)</label>
+                    <input type="datetime-local" class="ak-form-input ak-form-input--date" id="regenerate-platform-api-key-expires" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="common-btn-primary btn-sm" id="btn-submit-regenerate-platform-api-key">Regenerate</button>
+            <div class="modal-footer ak-modal-footer">
+                <button type="button" class="dp-btn dp-btn--outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="dp-btn dp-btn--primary" id="btn-submit-regenerate-platform-api-key">Regenerate</button>
             </div>
         </div>
     </div>
@@ -126,20 +133,32 @@
 
 <div class="modal fade" id="showPlatformApiKeySecretModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">API Key generated</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content ak-modal">
+            <div class="modal-header ak-modal-head">
+                <h5 class="modal-title ak-modal-title">API Key generated</h5>
+                <button type="button" class="ak-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="modal-body">
-                <p class="small text-warning">Copy this key now. You will not be able to see the full value again.</p>
-                <div class="input-group">
-                    <input type="text" class="form-control font-monospace" id="platform-api-key-secret-value" readonly />
-                    <button class="btn btn-outline-secondary" type="button" id="btn-copy-platform-api-key-secret">Copy</button>
+            <div class="modal-body ak-modal-body">
+                {{!-- Upstream's secret block. The copy control is positioned absolutely
+                      inside .ak-key-field, which reserves room for it with padding-right -
+                      in a Bootstrap .input-group the full-width input pushed it onto a
+                      second line. The caution is an amber callout rather than a line of
+                      orange text, and carries upstream's wording. --}}
+                <div class="ak-secret-key-label"><i class="bi bi-key"></i> Secret key</div>
+                <div class="ak-key-field">
+                    <code class="ak-key-code" id="platform-api-key-secret-value"></code>
+                    <button type="button" class="copy-btn ak-copy-btn--abs" id="btn-copy-platform-api-key-secret">
+                        <span class="copy-btn-icon"><i class="bi bi-copy"></i></span>
+                        <span class="copy-btn-check"><i class="bi bi-check"></i> Copied</span>
+                    </button>
+                </div>
+                <div class="ak-warning-amber">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Copy this key now. For your security, the full value is shown only once and cannot be retrieved after closing.</span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="common-btn-primary btn-sm" data-bs-dismiss="modal">Done</button>
+            <div class="modal-footer ak-modal-footer">
+                <button type="button" class="dp-btn dp-btn--primary" data-bs-dismiss="modal">Done</button>
             </div>
         </div>
     </div>

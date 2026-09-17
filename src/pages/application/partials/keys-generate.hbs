@@ -1,10 +1,10 @@
 <div class="modal custom-modal" id='OauthKeyModal'>
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content custom-modal-content">
-            <div class="custom-modal-header">
-                <h2 class="custom-modal-title m-0">OAuth2 Key Generation</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                    onclick="closeModal('OauthKeyModal')"></button>
+    <div class="modal-dialog dp-modal-dialog--lg" role="document">
+        <div class="modal-content custom-modal-content dp-modal">
+            <div class="custom-modal-header dp-modal-head">
+                <h2 class="custom-modal-title dp-modal-title m-0">OAuth2 Key Generation</h2>
+                <button type="button" class="dp-modal-close" data-bs-dismiss="modal" aria-label="Close"
+                    onclick="closeModal('OauthKeyModal')"><i class="bi bi-x-lg"></i></button>
             </div>
             <div class="custom-modal-body">
                 <div style="margin-bottom: 20px;">
@@ -67,13 +67,13 @@
                     <div id="tokenGenerationButtons_{{../name}}-{{keyType}}" class="d-flex mb-4" style="{{#unless (contains keys.supportedGrantTypes 'client_credentials')}} display: none !important;{{/unless}}">
                         <div class="row">
                             <div class="d-flex gap-2 mb-3">
-                                <button class='common-btn-primary'
+                                <button class='dp-btn dp-btn--primary'
                                     id='apiKeyGenerateButton-{{keyType}}'
                                     name='http-values' type='button'
                                     onClick="generateOauthKey('applicationKeyGenerateForm-{{../id}}-{{keyType}}', '{{keys.appRefID}}', '{{keys.keyMappingId}}', '{{../name}}', '{{keys.clientName}}', '{{keys.consumerSecret}}', '{{json ../../subAPIs}}', '{{keyType}}')">
                                     Generate Token
                                 </button>
-                                <button class='common-btn-primary'
+                                <button class='dp-btn dp-btn--primary'
                                     id='curl-{{keyType}}'
                                     name='http-values' type='button'
                                     onClick="generateCurl('{{../name}}-{{keyType}}', '{{../tokenEndpoint}}')">
@@ -81,23 +81,11 @@
                                 </button>
                             </div>
                             <div id="tokenDisplay_{{../name}}-{{keyType}}" style="display: none;">
-                                <div class="info-box">
-                                    <div class="info-content">
-                                        <div class="info-title">Copy the access token</div>
-                                        <p class="info-text">
-                                            Please copy this generated access token as it will not be visible in the UI
-                                            again.
-                                        </p>
-                                    </div>
-                                    <div class="info-icon">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" stroke-linejoin="round">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                        </svg>
-                                    </div>
+                                {{!-- The amber callout the API-key dialogs use, replacing a tinted slab with a
+                                      4px primary bar, a bold title on its own line and the icon floated right. --}}
+                                <div class="dp-note dp-note--warning">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    <span>Copy this access token now. For your security, it is shown only once and cannot be retrieved after closing.</span>
                                 </div>
 
                                 <div class="token-card">
@@ -311,7 +299,7 @@
                         <!-- Add Update configuration button when consumer key exists -->
                         <div class="d-flex mt-4 mb-3" id="applicationKeyUpdateButtonContainer-{{keyType}}"
                             style="{{#unless keys.consumerKey}}display: none !important;{{/unless}}">
-                            <button class="common-btn-primary" id="applicationKeyUpdateButton-{{keyType}}" name="http-values"
+                            <button class="dp-btn dp-btn--primary" id="applicationKeyUpdateButton-{{keyType}}" name="http-values"
                                 type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{keyType}}',
                                 '{{json @root.applicationMetadata.appMap}}', '{{keyType}}', '{{../name}}',
                                 '{{keys.keyMappingId}}', '{{keys.clientName}}')">
@@ -323,7 +311,7 @@
                     <div class="key-action-container" id="key-action-container-{{keyType}}">
                         <div class="d-flex col-md-6 justify-content-between w-100 align-items-center" style="height: 40px;">
                             <div class="d-flex gap-3" id="generate-keys-btn-container-{{keyType}}">
-                                <button class="common-btn-primary" id="applicationKeyGenerateButton-{{keyType}}" name="http-values"
+                                <button class="dp-btn dp-btn--primary" id="applicationKeyGenerateButton-{{keyType}}" name="http-values"
                                     type="button"
                                     data-subscriptions="{{ json ../../subAPIs }}"
                                     onClick="generateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{keyType}}', '{{../../applicationMetadata.id}}', '{{keyType}}', '{{../name}}', '{{../../applicationMetadata/name}}', this.getAttribute('data-subscriptions'), '{{../../orgID}}', 'consumer-key-{{../id}}-{{keyType}}', 'consumer-secret-{{../id}}-{{keyType}}')">
@@ -473,7 +461,7 @@
                             <!-- Add Update button at the bottom only when consumer key exists -->
                             <div class="d-flex mt-4 mb-3" id="applicationKeyUpdateButtonContainerAdv-{{keyType}}"
                                 style="{{#unless keys.consumerKey}}display: none !important;{{/unless}}">
-                                <button class="common-btn-primary" id="applicationKeyUpdateButtonAdv-{{keyType}}" name="http-values"
+                                <button class="dp-btn dp-btn--primary" id="applicationKeyUpdateButtonAdv-{{keyType}}" name="http-values"
                                     type="button" onClick="updateApplicationKey('applicationKeyGenerateForm-{{../id}}-{{keyType}}',
                                 '{{json @root.applicationMetadata.appMap}}', '{{keyType}}', '{{../name}}',
                                 '{{keys.keyMappingId}}', '{{keys.clientName}}')">

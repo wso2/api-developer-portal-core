@@ -1,6 +1,17 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 /* Content Area Styles */
+/* No border here. Upstream draws exactly one on the docs page - around the content
+   card - where this page had three nested inside each other: this box, the sidebar's
+   right edge, and .doc-content-wrapper inside it. */
 .doc-content {
     flex: 1;
+    min-width: 0;
+    padding: 1rem 0;
+    overflow-x: auto;
 }
 
 /* Documents Section */
@@ -10,9 +21,9 @@
 }
 
 .documents-sidebar {
-    padding: 1rem 2rem 1rem 0rem;
-    flex-shrink: 0;
-    border-right: 1px solid #e0e2e9;
+    padding: 1rem 0;
+    width: 15.5rem;
+    flex: none;
 }
 
 .documents-sidebar .search-container {
@@ -25,7 +36,7 @@
 .documents-sidebar .search-input {
     display: flex;
     align-items: center;
-    background-color: #e0e2e9;
+    background-color: var(--border);
     padding: 0.625rem 1rem;
     border-radius: 5px;
     width: 100%;
@@ -45,20 +56,20 @@
     font-size: 14px;
     font-weight: 300;
     background-color: transparent;
-    color: var(--main-text-color);
+    color: var(--ink);
 }
 
 .documents-sidebar #docQuery::placeholder {
-    color: var(--main-text-color);
+    color: var(--ink);
     opacity: 0.5;
 }
 
 .doc-content-wrapper {
     width: 100%;
     overflow-x: auto;
-    border: 0.5px solid #e0e2e9;
+    border: 0.0625rem solid var(--border);
     border-radius: 16px;
-    box-shadow: 0px 2px 4px #0000000a;
+    box-shadow: 0 0.125rem 0.25rem color-mix(in srgb, var(--ink) 4%, transparent);
     display: flex;
 }
 
@@ -69,9 +80,14 @@
 }
 
 .doc-section-title {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: var(--main-text-color);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: 0 0.75rem;
+    margin-bottom: 0.625rem;
+    color: var(--text-subtle);
 }
 
 .doc-links {
@@ -81,47 +97,229 @@
     margin-bottom: 16px;
 }
 
+/* A row, not a bordered chip - matching upstream's .adoc-nav-item. */
 .doc-link {
     display: flex;
     align-items: center;
-    min-width: 200px;;
-    padding: 8px 12px;
-    gap: 12px;
-    background: var(--main-bg-color);
-    box-shadow: 0px 0px 0px 1px #e0e2e9, 0px 1px 1px #CBCEDB;
-    border-radius: 8px;
+    padding: 0.625rem 0.75rem;
+    gap: 0.6875rem;
+    background: transparent;
+    border-radius: 0.5625rem;
+    font-size: 0.84375rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 0.15s, color 0.15s;
     text-decoration: none;
-    color: var(--main-text-color);
+    color: var(--text);
 }
 
 .doc-link:hover {
-    background-color: var(--secondary-bg-color);
+    background-color: var(--surface-sunken);
+    color: var(--primary);
+    text-decoration: none;
 }
 
 .doc-link.active {
-    background-color: var(--secondary-bg-color);
+    background-color: var(--primary-surface);
+    color: var(--primary);
+    font-weight: 600;
 }
 
 .doc-link i {
     width: auto;
     height: auto;
-    color: var(--primary-main-color);
+    color: var(--primary);
 }
 
+/* Inherits colour and size from .doc-link on purpose. Setting its own meant the
+   hover and active colours never showed - they were applied to the anchor while this
+   child painted over them - and 'Gilmer Medium' is loaded nowhere in the portal, so it
+   silently fell back to the default sans anyway. */
 .doc-title {
-    font-family: 'Gilmer Medium', sans-serif;
-    font-weight: 600;
-    font-size: 12px;
-    line-height: 24px;
-    color: var(--primary-main-color);
+    font-weight: inherit;
+    line-height: 1;
 }
 
 .doc-spec {
     display: block;
-    color: var(--main-text-color);
+    color: var(--ink);
     text-decoration: none;
     font-weight: 500;
     font-size: 1rem;
+}
+
+/* ── File badge ──────────────────────────────────────────────────
+   Names the artefact being shown above the content, so a spec page and a markdown
+   page are distinguishable at a glance. Ported from upstream's doc.css. */
+.adoc-file-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 0.375rem;
+    padding: 0.3125rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 1.125rem;
+}
+
+.adoc-file-badge--doc {
+    background: var(--warning-surface);
+    color: var(--warning);
+}
+
+.adoc-file-badge--spec {
+    background: var(--info-surface);
+    color: var(--info);
+}
+
+/* ── Markdown typography ─────────────────────────────────────────
+   Ported from upstream's doc.css. Until this landed, {{{apiMD}}} was emitted bare and
+   every markdown doc rendered at browser defaults - Times headings, unstyled tables,
+   no code-block treatment.
+
+   Scoped to .api-markdown-content throughout, deliberately: the markdown is authored by
+   the organization and arrives as raw HTML, so these are the only selectors in the sheet
+   that can match arbitrary h1/p/table/pre. Qualifying every one keeps them from leaking
+   onto the rest of the portal the way main.css's unqualified `h2`/`h5`/`h6` once did.
+
+   The two inline-code literals below are upstream's, kept rather than tokenised: they are
+   a fixed code accent rather than anything derived from the organization's palette, and
+   upstream's own block hardcodes them while tokenising everything else. --------------- */
+.api-markdown-content {
+    padding: 0;
+}
+
+.api-markdown-content h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-strong);
+    margin: 0 0 1rem;
+    letter-spacing: -0.01em;
+}
+
+.api-markdown-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-strong);
+    margin: 2.125rem 0 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 0.0625rem solid var(--border);
+}
+
+.api-markdown-content h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-strong);
+    margin: 1.5rem 0 0.5rem;
+}
+
+.api-markdown-content p {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0.875rem 0 0;
+}
+
+.api-markdown-content p:first-child {
+    margin-top: 0;
+}
+
+.api-markdown-content strong {
+    color: var(--text-strong);
+    font-weight: 600;
+}
+
+.api-markdown-content a {
+    color: var(--primary);
+}
+
+.api-markdown-content code {
+    font-family: var(--font-family-mono);
+    font-size: 0.78125rem;
+    color: #d6336c;
+    background: #fff0f3;
+    padding: 0.125rem 0.3125rem;
+    border-radius: 0.25rem;
+}
+
+.api-markdown-content pre {
+    background: var(--ink);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    overflow: auto;
+    margin: 1rem 0 0;
+}
+
+.api-markdown-content pre code {
+    color: var(--on-dark);
+    background: none;
+    padding: 0;
+    font-size: 0.78125rem;
+    line-height: 1.7;
+}
+
+.api-markdown-content ul,
+.api-markdown-content ol {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--text);
+    padding-left: 1.5rem;
+    margin: 0.75rem 0 0;
+}
+
+.api-markdown-content li {
+    margin-top: 0.375rem;
+}
+
+.api-markdown-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.875rem 0 0.25rem;
+}
+
+.api-markdown-content th {
+    text-align: left;
+    font-size: 0.78125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-strong);
+    padding: 0.625rem 1rem;
+    background: var(--surface-sunken);
+    border: 0.0625rem solid var(--border);
+}
+
+.api-markdown-content td {
+    font-size: 0.84375rem;
+    line-height: 1.5;
+    color: var(--text);
+    padding: 0.625rem 1rem;
+    border: 0.0625rem solid var(--border);
+    vertical-align: top;
+}
+
+.api-markdown-content blockquote {
+    margin: 1rem 0 0;
+    padding: 0.8125rem 0.9375rem 0.8125rem 1rem;
+    background: var(--info-surface);
+    border: 0.0625rem solid color-mix(in srgb, var(--info) 22%, var(--surface));
+    border-left: 0.25rem solid var(--primary);
+    border-radius: 0.625rem;
+}
+
+.api-markdown-content blockquote p {
+    color: var(--text);
+    margin: 0;
+}
+
+.api-markdown-content hr {
+    border: none;
+    border-top: 0.0625rem solid var(--border);
+    margin: 1.75rem 0;
 }
 
 /* Responsive Design */
@@ -134,6 +332,6 @@
     .documents-sidebar {
         width: 100%;
         border-right: none;
-        border-bottom: 1px solid #e0e2e9;
+        border-bottom: 0.0625rem solid var(--border);
     }
 }

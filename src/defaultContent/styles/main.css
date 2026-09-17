@@ -1,4 +1,10 @@
+/* The token layer, imported so this sheet stands alone. An organization with a
+   stored theme reaches our stylesheets through its own frozen main.css, and its
+   layout predates the tokens.css <link> - without this import the vocabulary
+   below would resolve to nothing there. /technical-styles/ is never rewritten. */
+@import "/technical-styles/tokens.css";
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Quicksand:wght@300..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "/styles/home.css";
 @import "/styles/footer.css";
 @import "/styles/header.css";
@@ -21,21 +27,27 @@
   --secondary-main-color: #FE8C3A;
   --secondary-light-color: #FEAF76;
   /* font colors */
-  --main-text-color: #40404b;
+  --main-text-color: #1a2433;
   --light-text-color: #ffffff;
   --dark-text-color: #000000;
   /* other special colors */
-  --success-color: #28a745;
-  --danger-color: #a40e26;
-  --warning-color: #ffc107;
+  --success-color: #2e7d32;
+  --danger-color: #c62828;
+  --warning-color: #e39a00;
   --white-color: #ffffff;
   --Black-color: #000000;
   --subscribed-color: #0c7838;
-  /* Gradient */
-  --primary-gradient: linear-gradient(135deg, #3d6b8a, #1c3b52);
+  /* Gradient. The home hero lays --hero-glow over this rather than replacing it, so the
+     console's gradient picker keeps driving the hero - which means this default is what
+     sets the hero's depth. The old #3d6b8a base sat within a few percent of
+     --primary-light (#2b719f), the colour particles.js draws its links and hover-grab
+     lines in, so the constellation was nearly invisible against it. This ramp is
+     upstream's: dark navy carried down toward black. Kept to one line - the console
+     parses this block line by line. */
+  --primary-gradient: linear-gradient(160deg, #043556 0%, #03263e 60%, #021f32 100%);
 
-  --font-family-sans: "Montserrat", "Quicksand", "Noto Sans", "Poppins", sans-serif;
-  --font-family-mono: "Roboto", monospace;
+  --font-family-sans: Inter, "Montserrat", "Quicksand", "Noto Sans", "Poppins", system-ui, -apple-system, sans-serif;
+  --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 html {
@@ -49,23 +61,35 @@ html {
   display: flex;
   flex-direction: column;
   font-family: var(--font-family-sans);
-  background-color: var(--main-bg-color);
+  background-color: var(--surface);
 }
 
 .main-container {
   display: flex;
   flex: 1;
-  margin-top: 4rem;
+  /* Reserve exactly what the fixed bars occupy - the header renders 58px (0.5rem
+     padding around a 2rem logo that Bootstrap's .navbar-brand insets a further
+     0.3125rem), the footer a flat 3rem. Reserving 4rem for both left a strip of page
+     background below the header that, being the same white as the header itself, read
+     as part of it: 13px of white above the logo against 35px below. Content now starts
+     where each bar ends; the breathing room below that is each page's own, as upstream
+     does it - .content-area adds none.
+     The sidebar's top/height in side-bar.css encode the same two bar heights - change
+     one and both must follow. */
+  margin-top: 3.5rem;
   font-weight: 500;
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
   position: relative;
   overflow-x: hidden;
 }
 
 .content-area {
-  margin-left: 7.5rem;
+  margin-left: 7.625rem;
   width: 100%;
-  margin-top: 1rem;
+  /* No top spacing, matching upstream's `padding: 0 2rem 1rem 2rem`. Each page brings its
+     own - the listing hero already carries the same 34px top padding upstream's does - so
+     the 1rem that used to sit here was added on top of it and pushed every themable page
+     16px further down than the on-prem portal. */
   margin-bottom: 1rem;
   padding-right: 2.25rem;
 }
@@ -76,8 +100,8 @@ html {
 
 .common-btn-primary {
   display: inline-block;
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -91,8 +115,8 @@ html {
 }
 .common-btn-primary[disabled],
 .common-btn-primary.disabled {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
@@ -101,8 +125,8 @@ html {
 
 .common-btn-light {
   display: inline-block;
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--primary-light);
+  color: var(--white);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -115,23 +139,23 @@ html {
 }
 
 .common-btn-light:hover {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .common-btn-light:active {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .common-btn-primary:hover {
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--primary-light);
+  color: var(--white);
 }
 
 .common-btn-primary:active {
-  background-color: var(--primary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--primary);
+  color: var(--white);
 }
 
 .common-btn-primary:focus {
@@ -139,22 +163,22 @@ html {
 }
 
 .common-btn-secondary {
-  background-color: var(--secondary-main-color);
+  background-color: var(--accent);
 }
 
 .common-btn-secondary:hover {
-  background-color: var(--secondary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--accent-light);
+  color: var(--white);
 }
 
 .common-btn-secondary:active {
-  background-color: var(--secondary-main-color);
-  color: var(--light-text-color);
+  background-color: var(--accent);
+  color: var(--white);
 }
 .common-btn-white {
   display: inline-block;
-  background-color: var(--white-color);
-  color: var(--primary-main-color);
+  background-color: var(--white);
+  color: var(--primary);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   border: none;
@@ -166,11 +190,11 @@ html {
 }
 
 .common-btn-white:hover {
-  background-color: var(--secondary-light-color);
+  background-color: var(--accent-light);
 }
 
 .common-btn-white:active {
-  background-color: var(--primary-main-color);
+  background-color: var(--primary);
   transform: scale(0.98);
 }
 
@@ -180,7 +204,7 @@ html {
 
 .common-btn-link {
   display: inline-block;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
   text-decoration: none;
@@ -191,12 +215,12 @@ html {
 }
 
 .common-btn-link:hover {
-  color: var(--primary-light-color);
+  color: var(--primary-light);
   text-decoration: none;
 }
 
 .common-btn-link:active {
-  color: var(--primary-main-color);
+  color: var(--primary);
 }
 
 .common-btn-link:focus {
@@ -206,10 +230,10 @@ html {
 .common-btn-outlined {
   display: inline-block;
   background-color: transparent;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 0.875rem;
   padding: 0.625rem 1.25rem;
-  border: 0.0625rem solid var(--primary-main-color);
+  border: 0.0625rem solid var(--primary);
   border-radius: 0.5rem;
   text-decoration: none;
   cursor: pointer;
@@ -218,14 +242,14 @@ html {
 }
 
 .common-btn-outlined:hover {
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
-  border-color: var(--primary-main-color);
+  background-color: var(--primary-light);
+  color: var(--white);
+  border-color: var(--primary);
 }
 
 .common-btn-outlined:active {
-  background-color: var(--primary-light-color);
-  color: var(--light-text-color);
+  background-color: var(--primary-light);
+  color: var(--white);
 }
 
 .common-btn-outlined:focus {
@@ -238,18 +262,18 @@ html {
 }
 
 .common-btn-danger {
-  background-color: var(--danger-color);
-  color: var(--light-text-color);
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .common-btn-danger:hover {
-  background-color: var(--danger-color);
-  color: var(--light-text-color);
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .common-btn-danger:active {
-  background-color: var(--danger-color);
-  color: var(--light-text-color);
+  background-color: var(--danger);
+  color: var(--white);
 }
 
 .common-btn-danger:focus {
@@ -260,7 +284,7 @@ html {
   text-transform: uppercase;
   font-size: 0.9375rem;
   font-weight: 400;
-  color: var(--main-text-color);
+  color: var(--ink);
   vertical-align: top;
 }
 
@@ -268,7 +292,7 @@ html {
   font-size: 1.875rem;
   margin-bottom: 3.5rem;
   font-weight: 600;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 /* common-badge */
@@ -293,34 +317,34 @@ html {
   height: 100%;
   border-radius: 0.75rem;
   padding: 20px;
-  background: var(--main-bg-color);
+  background: var(--surface);
 }
 
 /* common-md-file-style */
 .api-md-content {
   padding: 40px 130px;
-  background-color: var(--main-bg-color);
+  background-color: var(--surface);
   line-height: 1.8;
 }
 
 /* --Title-- */
 .api-md-content h1 {
   font-size: 30px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .api-md-content h3,
-h2 {
+.api-md-content h2 {
   font-size: 24px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 /* --SubTitle-- */
 .api-md-content h4,
-h5,
-h6 {
+.api-md-content h5,
+.api-md-content h6 {
   font-size: 20px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 /* --Paragraph-- */
@@ -331,7 +355,7 @@ h6 {
 
 .api-md-content li {
   font-size: 15px;
-  color: var(--main-text-color);
+  color: var(--ink);
 }
 
 .api-md-content li::marker {
@@ -341,7 +365,7 @@ h6 {
 /* header styles */
 .container-header {
   display: block;
-  color: var(--primary-main-color);
+  color: var(--primary);
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -471,5 +495,19 @@ h6 {
 }
 
 .span-highlight {
-  color: var(--secondary-main-color);
+  color: var(--accent);
+}
+/* ── Mobile drawer: reclaim the rail's column ────────────────────
+   Pairs with side-bar.css's 860px block, where the sidebar leaves the flow and becomes
+   an off-canvas drawer. It lives here rather than there because .content-area is
+   declared in this file, below the @import that pulls side-bar.css in - a media query
+   adds no specificity, so the same rule written over there would lose to the
+   margin-left below and the content would stay indented against an absent rail.
+   Guarded on the same toggle as side-bar.css so the two can never disagree. */
+@media (max-width: 860px) {
+  body:has(#sidebarToggle) .content-area {
+    margin-left: 0;
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
 }

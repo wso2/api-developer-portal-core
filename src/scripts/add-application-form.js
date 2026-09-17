@@ -1,8 +1,8 @@
 //DOM References
-const plusCard = document.getElementById('applicationCreateCard');
-const formView = document.getElementById('applicationCreateForm');
-const wrapper = document.getElementById('createApplicationCardWrapper');
+const createModal = document.getElementById('app-create-modal');
+const createModalClose = document.getElementById('app-create-close');
 const createButton = document.getElementById('createButton');
+const createButtonEmpty = document.getElementById('createButtonEmpty');
 const remainingCharactersSpan = document.getElementById('remainingCharacters');
 const nameError = document.getElementById('nameError');
 const descriptionError = document.getElementById('descriptionError');
@@ -10,44 +10,44 @@ const saveButton = document.getElementById('createAppButton');
 const cancelButton = document.getElementById('cancelCreateButton');
 const applicationForm = document.getElementById('applicationForm');
 const nameInput = document.getElementById('applicationName');
-const name = document.getElementById('applicationName').value;
+/* Dropped: `const name = document.getElementById('applicationName').value;`. It read the
+   field at parse time, so it was always the empty string, and nothing used it - the submit
+   handler reads the value again when it fires. It was also the one unguarded dereference
+   left at module scope, which would have taken the whole script down on any page that
+   loads it without a create form. */
 
 let hasStartTyping = false;
 
-function showApplicationForm() {
-    if (formView) {
-        formView.classList.remove('d-none');
-        plusCard.classList.add('d-none');
-    }
+/* The form is a dialog now, not a card expanded in the grid.
+
+   The old showApplicationForm / toggleCreateCard / hideApplicationForm are gone. They
+   existed only as onclick targets in applications-listing.hbs, which now binds through
+   addEventListener instead. Dropping showApplicationForm also removes a real hazard: this
+   file and subscription.js both declared a top-level function of that name, and both are
+   loaded together on the apis, api-landing and mcp pages, where whichever parsed last
+   silently won. subscription.js's is the one those pages mean. */
+
+function openCreateModal() {
+    if (!createModal) return;
+    // Always open on a clean form: the dialog persists in the DOM between opens.
+    if (applicationForm) applicationForm.reset();
+    hasStartTyping = false;
+    if (nameError) nameError.classList.add('d-none');
+    if (descriptionError) descriptionError.style.display = 'none';
+    if (remainingCharactersSpan) remainingCharactersSpan.textContent = '256';
+    if (saveButton) saveButton.disabled = true;
+    createModal.classList.add('show');
+    document.body.classList.add('app-modal-open');
+    // After the class lands, or focus() runs against a display:none subtree.
+    setTimeout(() => nameInput?.focus(), 60);
 }
 
-function toggleCreateCard() {
-    if (wrapper && formView) {
-        wrapper.classList.remove('d-none');
-        formView.classList.remove('d-none');
-        createButton.disabled = true;
-        if (plusCard) {
-            plusCard.classList.add('d-none');
-        }
-        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+function closeCreateModal() {
+    if (!createModal) return;
+    createModal.classList.remove('show');
+    document.body.classList.remove('app-modal-open');
 }
 
-function hideApplicationForm(el) {
-    const hasApps = el.getAttribute('data-has-apps') === 'true';
-    if (wrapper && formView) {
-        formView.classList.add('d-none');
-        hasStartTyping = false;
-        if (hasApps) {
-            createButton.disabled = false;
-            wrapper.classList.add('d-none');
-            plusCard.classList.add('d-none');
-        } else {
-            wrapper.classList.remove('d-none');
-            plusCard.classList.remove('d-none');
-        }
-    }
-}
 
 // Function to show loading state on Create button
 window.showCreateButtonLoading = function (button) {
@@ -118,11 +118,27 @@ document.addEventListener('DOMContentLoaded', () => {
         validateForm();
     });
 
-    if (createButton) {
-        cancelButton.addEventListener('click', () => {
-            closeModal('createAppModal');
-        });
-    }
+    /* Was `closeModal('createAppModal')`, which threw: closeModal is defined in
+       subscription.js, and the applications page does not load it. It also pointed at the
+       shared create-app partial's dialog rather than this page's own form.
+       No longer gated on the header create button existing either - that button is absent
+       on an empty portal, where the dialog opens from the empty state, and the gate left
+       Cancel dead there. */
+    cancelButton?.addEventListener('click', closeCreateModal);
+    createModalClose?.addEventListener('click', closeCreateModal);
+    createButton?.addEventListener('click', openCreateModal);
+    createButtonEmpty?.addEventListener('click', openCreateModal);
+
+    // Click the backdrop, not the dialog, to dismiss.
+    createModal?.addEventListener('click', (event) => {
+        if (event.target === createModal) closeCreateModal();
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && createModal?.classList.contains('show')) {
+            closeCreateModal();
+        }
+    });
 
     document
         .getElementById('applicationForm')
@@ -131,6 +147,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 event.preventDefault();
             }
         });
+
+    /* Shown after the reload that follows a successful create. alert.js is loaded by the
+       alert partial, which this page renders, and both scripts are deferred - so showAlert
+       is defined by the time this runs. Guarded anyway: the partial is not on every page
+       that loads this script. */
+    const createdParam = new URLSearchParams(window.location.search).get('created');
+    if (createdParam === 'success') {
+        if (typeof showAlert === 'function') {
+            showAlert('Application created successfully!', 'success');
+        }
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('created');
+        window.history.replaceState({}, document.title, cleanUrl.toString());
+    }
 
     // Initialize the character count and form validation on page load
     const remaining = Math.max(
@@ -169,17 +199,21 @@ applicationForm.addEventListener('submit', async (e) => {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const responseData = await response.json();
-        const messageOverlay = document.getElementById('message-overlay');
-        if (messageOverlay && typeof window.showAppMessage === 'function') {
-            window.showAppMessage(
-                messageOverlay,
-                responseData.message || 'Application created successfully!',
-                'success',
-            );
-        }
-        saveButton.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Created`;
-        window.location.reload();
+        await response.json();
+
+        /* The dialog says nothing on success. What stood here painted the in-dialog
+           .message-overlay - absolute, left:0/right:0, bottom:0.3rem, so a white slab
+           across the footer directly over the Create button - and flipped the button to
+           "Created", both of which were then thrown away by the reload on the next line.
+           All the user saw was a flash beside the button.
+
+           The new application has to come from the server, so the reload stays; the
+           confirmation is carried across it in the query string and shown by the portal's
+           own bottom-right alert, the same way the subscribe flow does it. */
+        closeCreateModal();
+        const reloadUrl = new URL(window.location.href);
+        reloadUrl.searchParams.set('created', 'success');
+        window.location.assign(reloadUrl.toString());
     } catch (error) {
         resetButtonState(saveButton);
         console.error('Error saving application:', error);

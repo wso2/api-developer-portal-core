@@ -16,8 +16,27 @@
  * under the License.
  */
  -->
+{{!-- The badge names the artefact on screen, and .api-markdown-content is what dresses
+      the organization's raw markdown - without the wrapper it renders at browser
+      defaults. Both ported from upstream's api-doc.hbs. --}}
 {{#if isAPIDefinition}}
+<div class="adoc-file-badge adoc-file-badge--spec">
+  <i class="bi bi-code-slash"></i>
+  {{#if (eq apiType "GRAPHQL")}}schema.graphql
+  {{else if (eq apiType "SOAP")}}definition.xml
+  {{else if (eq apiType "WS")}}asyncapi.yaml
+  {{else if (eq apiType "WEBSUB")}}asyncapi.yaml
+  {{else}}openapi.yaml
+  {{/if}}
+</div>
 {{> api-specification}}
 {{else}}
-{{{apiMD}}}
+{{#if currentDocName}}
+<div class="adoc-file-badge adoc-file-badge--doc">
+  <i class="bi bi-file-text"></i> {{currentDocName}}.md
+</div>
+{{/if}}
+<div class="api-markdown-content">
+  {{{apiMD}}}
+</div>
 {{/if}}

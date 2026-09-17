@@ -78,7 +78,9 @@ async function executeDeleteSubscription() {
                 }
                 const noSubs = document.getElementById('no-subscriptions');
                 if (noSubs) {
-                    noSubs.style.display = 'block';
+                    /* Clear the inline style rather than forcing 'block': .dp-empty centres
+                       its contents with flex, and hardcoding block here would flatten it. */
+                    noSubs.style.display = '';
                 }
             }
         } else {

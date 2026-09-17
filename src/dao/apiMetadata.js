@@ -1324,17 +1324,36 @@ const getAllAPIMetadataFromAllViews = async (orgID, groups, t) => {
     return apiList;
 };
 
-const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
+/* viewName was already being passed by getMetadataListFromDB - as the FOURTH argument,
+   where this signature expected the transaction. So the view was silently swallowed, the
+   query ran outside the caller's transaction, and search returned APIs belonging to other
+   views that the listing hides. */
+const searchAPIMetadata = async (orgID, groups, searchTerm, viewName, t) => {
     try {
+        const viewID = await getViewID(orgID, viewName);
         const query = `
         SELECT 
             metadata.*,
+            -- Correlated subqueries rather than aggregates over the joins below. The join to
+            -- DP_API_CONTENT multiplies every row by the number of content files an API
+            -- has, and JSON_AGG without DISTINCT repeated each image and each policy that
+            -- many times - an API with one plan and two content files reported two plans.
+            -- The listing path, which joins through Sequelize, always reported one.
             COALESCE(
-                JSON_AGG("DP_API_IMAGEDATA") FILTER (WHERE "DP_API_IMAGEDATA"."API_ID" IS NOT NULL), 
+                (SELECT JSON_AGG(TO_JSONB(img))
+                 FROM "DP_API_IMAGEDATA" img
+                 WHERE img."API_ID" = metadata."API_ID"),
                 '[]'
             ) AS "DP_API_IMAGEDATA",
-             COALESCE(
-                JSON_AGG("DP_API_SUBSCRIPTION_POLICY") FILTER (WHERE "DP_API_SUBSCRIPTION_POLICY"."API_ID" IS NOT NULL), 
+            -- DP_API_SUBSCRIPTION_POLICY is the join table: API_ID and POLICY_ID only. The
+            -- old aggregate handed those rows straight to APISubscriptionPolicy, which
+            -- reads POLICY_NAME, DISPLAY_NAME, REQUEST_COUNT and the pricing columns - none
+            -- of which exist there - so every plan a search returned was also nameless.
+            COALESCE(
+                (SELECT JSON_AGG(TO_JSONB(pol))
+                 FROM "DP_API_SUBSCRIPTION_POLICY" api_pol
+                 JOIN "DP_SUBSCRIPTION_POLICY" pol ON pol."POLICY_ID" = api_pol."POLICY_ID"
+                 WHERE api_pol."API_ID" = metadata."API_ID"),
                 '[]'
             ) AS "DP_API_SUBSCRIPTION_POLICY",
             COALESCE(
@@ -1366,12 +1385,6 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 OR content."FILE_NAME" LIKE '%.graphql%'
             ) 
         LEFT OUTER JOIN 
-            "DP_API_IMAGEDATA" 
-            ON metadata."API_ID" = "DP_API_IMAGEDATA"."API_ID"
-        LEFT OUTER JOIN 
-            "DP_API_SUBSCRIPTION_POLICY" 
-            ON metadata."API_ID" = "DP_API_SUBSCRIPTION_POLICY"."API_ID"
-        LEFT OUTER JOIN 
             "DP_API_LABELS"  
             ON metadata."API_ID" = "DP_API_LABELS"."API_ID"
         LEFT OUTER JOIN 
@@ -1386,16 +1399,37 @@ const searchAPIMetadata = async (orgID, groups, searchTerm, t) => {
                 )
             )
             AND metadata."ORG_ID" = :orgID
+            -- getAllAPIMetadata, the no-query path, restricts to published APIs. This
+            -- query did not, so searching surfaced rows the listing hides - including
+            -- STATUS = 'DELETED' ones, which is how /mcps?query=mcp returned 9 against a
+            -- listing of 6. Anything not published must not be reachable by search either.
+            AND metadata."STATUS" = :status
+            -- Same view restriction getAllAPIMetadata applies through its required Labels
+            -- join: an API reaches a view only by carrying one of that view's labels.
+            -- Without it, searching surfaced APIs published to other views.
+            AND EXISTS (
+                SELECT 1
+                FROM "DP_API_LABELS" view_al
+                JOIN "DP_VIEW_LABELS" view_vl ON view_vl."LABEL_ID" = view_al."LABEL_ID"
+                WHERE view_al."API_ID" = metadata."API_ID"
+                  AND view_vl."VIEW_ID" = :viewID
+            )
         GROUP BY 
             metadata."API_ID"
         ORDER BY
             rank_metadata DESC;
         `;
-        const formattedGroups = `{${groups.map((g) => `"${g}"`).join(',')}}`;
-
+        /* No group restriction, deliberately - matching the listing rather than being
+           stricter than it. getAllAPIMetadata unions its per-group queries with an
+           unrestricted "all public APIs" query that carries no VISIBLE_GROUPS condition,
+           so every published API in the view is returned there regardless of group.
+           Filtering by group here would hide rows the listing shows. The groups argument
+           stays in the signature because the caller passes it and because the listing's
+           own group handling is worth revisiting on its own. */
         const results = await APIMetadata.sequelize.query(query, {
-            replacements: { searchTerm, orgID, groups: formattedGroups },
+            replacements: { searchTerm, orgID, viewID, status: constants.API_STATUS.PUBLISHED },
             type: Sequelize.QueryTypes.SELECT,
+            transaction: t,
         });
         return results;
     } catch (error) {

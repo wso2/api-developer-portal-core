@@ -31,6 +31,7 @@ const baseURLDev = config.baseUrl + constants.ROUTE.VIEWS_PATH;
 const loadCustomContent = async (req, res) => {
 
     let html = "";
+    let statusCode = 200;
     const { orgName, viewName } = req.params;
     let filePath = req.originalUrl.split("/" + orgName + constants.ROUTE.VIEWS_PATH + viewName + "/")[1];
     
@@ -76,7 +77,9 @@ const loadCustomContent = async (req, res) => {
                 if (filePath.includes('manage-keys')) {
                     throw new Error(`Manage keys page not found. This route should be handled by the application controller.`);
                 }
-                throw new Error(`Content page not found at ${resolvedPagePath}`);
+                const notFound = new Error(`Content page not found at ${resolvedPagePath}`);
+                notFound.status = 404;
+                throw notFound;
             }
             const orgDetails = await adminDao.getOrganization(orgName);
             const orgId = orgDetails.ORG_ID;
@@ -105,10 +108,18 @@ const loadCustomContent = async (req, res) => {
             }
             html = await renderTemplateFromAPI(content, orgId, orgName, filePath, viewName);
         } catch (error) {
+            /* A path with no page behind it is a 404, not a server error. This branch used
+               to render "Oops! Something went wrong" for both, and send it with HTTP 200 -
+               so a mistyped URL looked like a crash and told crawlers the page exists. */
+            const isNotFound = error.status === 404;
+            statusCode = isNotFound ? 404 : 500;
             const templateContent = {
                 devportalMode: devportalMode,
                 baseUrl: '/' + orgName + constants.ROUTE.VIEWS_PATH + viewName,
-                errorMessage: constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
+                errorType: isNotFound ? '404' : '500',
+                errorMessage: isNotFound
+                    ? constants.ERROR_MESSAGE.COMMON_PAGE_NOT_FOUND_ERROR_MESSAGE
+                    : constants.ERROR_MESSAGE.COMMON_ERROR_MESSAGE,
                 profile: req.isAuthenticated() ? req.user : null,
             }
             logger.error('Error while loading custom content', { 
@@ -120,7 +131,7 @@ const loadCustomContent = async (req, res) => {
             html = renderTemplate('../pages/error-page/page.hbs', "./src/defaultContent/" + 'layout/main.hbs', templateContent, true);
         }
     }
-    res.send(html);
+    res.status(statusCode).send(html);
 }
 
 
