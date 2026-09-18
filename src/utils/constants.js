@@ -85,6 +85,9 @@ module.exports = {
         PNG: 'image/png',
         JPEG: 'image/jpeg',
         SVG: 'image/svg+xml',
+        GIF: 'image/gif',
+        ICO: 'image/x-icon',
+        WEBP: 'image/webp',
         PDF: 'application/pdf',
         CONYEMT_TYPE_OCT: 'application/octet-stream',
         CONYEMT_TYPE: 'Content-Type',
@@ -110,6 +113,8 @@ module.exports = {
         HBS: '.hbs',
         MD: '.md',
         GIF: '.gif',
+        ICO: '.ico',
+        WEBP: '.webp',
         YAML: '.yaml',
         YML: '.yml',
         XML: '.xml'
