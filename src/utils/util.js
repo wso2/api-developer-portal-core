@@ -326,6 +326,8 @@ const imageMapping = {
     [constants.FILE_EXTENSIONS.JPEG]: constants.MIME_TYPES.JPEG,
     [constants.FILE_EXTENSIONS.PNG]: constants.MIME_TYPES.PNG,
     [constants.FILE_EXTENSIONS.GIF]: constants.MIME_TYPES.GIF,
+    [constants.FILE_EXTENSIONS.ICO]: constants.MIME_TYPES.ICO,
+    [constants.FILE_EXTENSIONS.WEBP]: constants.MIME_TYPES.WEBP,
 };
 const fileMapping = {
     [constants.FILE_EXTENSIONS.JSON]: constants.MIME_TYPES.JSON,
@@ -342,7 +344,8 @@ const textFiles = [
 const imageFiles = [
     constants.FILE_EXTENSIONS.SVG, constants.FILE_EXTENSIONS.JPG,
     constants.FILE_EXTENSIONS.JPEG, constants.FILE_EXTENSIONS.PNG,
-    constants.FILE_EXTENSIONS.GIF
+    constants.FILE_EXTENSIONS.GIF, constants.FILE_EXTENSIONS.ICO,
+    constants.FILE_EXTENSIONS.WEBP
 ]
 
 const isTextFile = (fileExtension) => {
@@ -797,7 +800,6 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 let content = await fs.promises.readFile(filePath);
                 let strContent = await fs.promises.readFile(filePath, constants.CHARSET_UTF8);
                 let dir = baseDir.replace(/^[^/]+\/?/, '') || '/';
-                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg'];
                 const fileExtension = path.extname(file.name).toLowerCase();
                 let fileType;
                 if (file.name.endsWith(".css")) {
@@ -828,7 +830,7 @@ async function readFilesInDirectory(directory, orgId, protocol, host, viewName, 
                 } else if (file.name.endsWith(".hbs")) {
                     validateScripts(strContent);
                     fileType = "template";
-                } else if (imageExtensions.includes(fileExtension)) {
+                } else if (isImageFile(fileExtension)) {
                     fileType = "image";
                 } else {
                     // Unexpected file type
