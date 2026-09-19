@@ -59,8 +59,13 @@ const PREVIEW = [
     'pages/api-landing/partials/api-default.hbs',
 ];
 
-/** Served at /technical-styles/ by the portal; the console needs them at the same path. */
-const TECHNICAL_FILES = ['tokens.css', 'components.css'];
+/**
+ * Served at /technical-styles/ by the portal; the console needs them at the same path.
+ * layout.css is here because the console's preview iframe links it directly
+ * (OrgThemingIframe.tsx) rather than reaching it through an @import, so nothing else
+ * would notice if this copy went stale.
+ */
+const TECHNICAL_FILES = ['tokens.css', 'components.css', 'layout.css'];
 
 /**
  * Images the console's own copies of the shipped templates reference. Without these the
