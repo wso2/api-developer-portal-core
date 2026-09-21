@@ -81,6 +81,11 @@ const IMAGES = [
     'websocket-icon.svg',
     'mcp-icon.svg',
     'applications-icon.svg',
+    // Not referenced by header.hbs, which ships api-portal-logo.svg - but the console
+    // seeds its logo picker from this file and, on publish, rewrites the header's src to
+    // /images/devportalLogo.png and uploads it. Left unsynced, every theme published from
+    // the console silently replaces the portal's mark with whatever this copy holds.
+    'devportalLogo.png',
 ];
 
 function copy(from, to) {

@@ -370,69 +370,45 @@ document.addEventListener("DOMContentLoaded", function () {
     // Call the function when page loads
     setActiveDocLink();
 
-    // Utility function to add a newly created application to all relevant dropdowns
+    /* Adds a newly created application to every relevant dropdown.
+
+       The row is built to be indistinguishable from a server-rendered one, and carries no
+       listener of its own. It used to get a bespoke click handler that duplicated the
+       delegated one below - minus syncSubscribeControl - and opened with
+       e.stopPropagation(), so selecting the new application never reached the delegated
+       handler and the card kept whichever control the previously selected application had
+       left showing. Creating an application while a subscribed one was selected therefore
+       left "View subscription" in place until the page was reloaded.
+
+       data-subscribed is set explicitly: a brand new application holds no subscription, and
+       syncSubscribeControl reads that attribute rather than inferring from its absence. */
     function addAppToAllDropdowns(appId, appName, sourceType) {
         // Determine what type of dropdowns to update based on source
         const selector = sourceType === 'api-card' ? '.api-card .custom-dropdown' : '.subscription-card .custom-dropdown';
         const dropdowns = document.querySelectorAll(selector);
-        
+
         dropdowns.forEach(dropdown => {
             const selectItemsContainer = dropdown.querySelector('.select-items-container');
             if (!selectItemsContainer) return;
-            
-            // Create a temporary container to convert HTML string to DOM element
-            const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = `
-                <div class="select-item" role="button" data-value="${appId}" data-app-name="${appName}">
-                    <span>${appName}</span>
-                    <img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"
-                        alt="Subscribed" class="subscription-icon" style="display: none;" />
-                </div>
-            `;
-            
-            // Get the actual DOM element
-            const newAppItem = tempContainer.firstElementChild;
-            
-            // Add click event listener to the DOM element
-            newAppItem.addEventListener('click', function(e) {
-                e.stopPropagation();
-                
-                // Get the parent card
-                const parentCard = dropdown.closest('.api-card') || dropdown.closest('.subscription-card');
-                
-                // Update hidden input with selected app ID
-                const hiddenField = sourceType === 'api-card' 
-                    ? document.getElementById(dropdown.querySelector("[id^='selectedAppId-']").id)
-                    : dropdown.querySelector('input[type="hidden"]');
-                    
-                if (hiddenField) {
-                    hiddenField.value = appId;
-                }
-                
-                // Update display text
-                const selectedText = dropdown.querySelector('.selected-text');
-                if (selectedText) {
-                    selectedText.textContent = appName;
-                    selectedText.classList.add('selected');
-                }
-                
-                // Enable the Subscribe button
-                const subscribeButton = parentCard.querySelector('.subscription-plan-subscribe-btn[disabled]') || parentCard.querySelector('.common-btn-primary[disabled]');
-                if (subscribeButton) {
-                    subscribeButton.removeAttribute('disabled');
-                }
-                
-                // Close dropdown
-                const selectItems = dropdown.querySelector('.select-items');
-                selectItems.classList.remove('show');
-                
-                // Update aria-expanded
-                const selectSelected = dropdown.querySelector('.select-selected');
-                if (selectSelected) {
-                    selectSelected.setAttribute('aria-expanded', 'false');
-                }
-            });
-            
+
+            // Built through the DOM rather than an HTML string: the name is user input and
+            // was being interpolated into innerHTML unescaped.
+            const newAppItem = document.createElement('div');
+            newAppItem.className = 'select-item';
+            newAppItem.setAttribute('role', 'button');
+            newAppItem.dataset.value = appId;
+            newAppItem.dataset.appName = appName;
+            newAppItem.dataset.subscribed = 'false';
+
+            // Same shape as the server-rendered rows, so the new one does not read as odd.
+            const label = document.createElement('div');
+            label.className = 'd-flex flex-column flex-grow-1';
+            const name = document.createElement('span');
+            name.className = 'fw-semibold';
+            name.textContent = appName;
+            label.appendChild(name);
+            newAppItem.appendChild(label);
+
             // Add the new app to the top of the list for better visibility
             if (selectItemsContainer.firstChild) {
                 selectItemsContainer.insertBefore(newAppItem, selectItemsContainer.firstChild);
@@ -440,6 +416,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 selectItemsContainer.appendChild(newAppItem);
             }
         });
+    }
+
+    /* The create-app paths select the application they just made, which is a selection
+       change like any other and has to move the control with it. */
+    function selectNewAppInDropdown(dropdown, appId) {
+        if (!dropdown) return;
+        syncSubscribeControl(dropdown, dropdown.querySelector(`.select-item[data-value="${appId}"]`));
     }
 
     const apiCards = document.querySelectorAll(".api-card");
@@ -698,7 +681,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                 
                                 // Add the new app to all API card dropdowns
                                 addAppToAllDropdowns(response.id, appName, 'api-card');
-                                
+                                selectNewAppInDropdown(dropdown, response.id);
+
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");
@@ -1009,7 +993,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                 
                                 // Add the new app to all subscription card dropdowns
                                 addAppToAllDropdowns(response.id, appName, 'subscription-card');
-                                
+                                selectNewAppInDropdown(dropdown, response.id);
+
                                 // Close the dropdown
                                 selectItems.classList.remove("show");
                                 selectSelected.setAttribute("aria-expanded", "false");

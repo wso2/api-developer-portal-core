@@ -126,8 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
        Cancel dead there. */
     cancelButton?.addEventListener('click', closeCreateModal);
     createModalClose?.addEventListener('click', closeCreateModal);
-    createButton?.addEventListener('click', openCreateModal);
-    createButtonEmpty?.addEventListener('click', openCreateModal);
+
+    /* Delegated rather than bound to the two elements: both live inside
+       #applicationsContainer, which refreshApplicationsList replaces wholesale after a
+       create. Bound listeners would go with the old nodes and the button would die after
+       the first application - the empty-state one especially, since creating from it is
+       exactly what swaps it away. */
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('#createButton, #createButtonEmpty')) openCreateModal();
+    });
 
     // Click the backdrop, not the dialog, to dismiss.
     createModal?.addEventListener('click', (event) => {
@@ -171,6 +178,39 @@ document.addEventListener('DOMContentLoaded', () => {
     validateForm();
 });
 
+/* Re-renders the applications list in place of a page load.
+
+   The page is fetched again and only #applicationsContainer is swapped in, so the markup
+   is still the server's - the new card, its subscription count, the empty state giving way
+   to the grid, the header's Create button appearing with the first application. Nothing
+   here builds a card, so nothing can drift from what a reload would have shown.
+
+   Everything inside the container is reached by inline onclick or by delegation, so the
+   swap leaves nothing unbound. If the fetch fails, or the response is not this page any
+   more - a session that has expired into a login redirect - it falls back to the reload
+   this replaced rather than leaving a stale list on screen. */
+async function refreshApplicationsList() {
+    try {
+        const response = await fetch(window.location.href, {
+            credentials: 'same-origin',
+            headers: { Accept: 'text/html' },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const next = doc.getElementById('applicationsContainer');
+        const current = document.getElementById('applicationsContainer');
+        if (!next || !current) throw new Error('applications container not in the response');
+
+        current.replaceWith(next);
+        return true;
+    } catch (error) {
+        console.error('Could not refresh the applications list:', error);
+        window.location.reload();
+        return false;
+    }
+}
+
 // Submittion of the form
 applicationForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -201,19 +241,18 @@ applicationForm.addEventListener('submit', async (e) => {
 
         await response.json();
 
-        /* The dialog says nothing on success. What stood here painted the in-dialog
-           .message-overlay - absolute, left:0/right:0, bottom:0.3rem, so a white slab
-           across the footer directly over the Create button - and flipped the button to
-           "Created", both of which were then thrown away by the reload on the next line.
-           All the user saw was a flash beside the button.
+        /* The dialog says nothing on success; the confirmation is the portal's own
+           bottom-right alert, and the new card simply appears.
 
-           The new application has to come from the server, so the reload stays; the
-           confirmation is carried across it in the query string and shown by the portal's
-           own bottom-right alert, the same way the subscribe flow does it. */
+           The list still comes from the server - refreshApplicationsList re-fetches this
+           page and swaps the container - so there is no client-built card to keep in step
+           with what the server would have rendered. What is gone is the page load: the
+           scroll position, and the white flash, stay put. */
         closeCreateModal();
-        const reloadUrl = new URL(window.location.href);
-        reloadUrl.searchParams.set('created', 'success');
-        window.location.assign(reloadUrl.toString());
+        await refreshApplicationsList();
+        if (typeof showAlert === 'function') {
+            showAlert('Application created successfully!', 'success');
+        }
     } catch (error) {
         resetButtonState(saveButton);
         console.error('Error saving application:', error);

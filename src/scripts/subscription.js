@@ -381,22 +381,18 @@ async function subscribe(orgID, applicationID, apiId, apiReferenceID, policyId, 
 
       if (response.ok) {
         closeModal('planModal-' + apiId);
-        /* Patch the card, then reload.
+        /* No reload. markSubscribedUI reaches the state a reload would render - the
+           ribbon, the tint, "View subscription" on this card, and the one-plan-per-
+           application rule applied to every sibling card - so navigating away only cost
+           the user their scroll position and a white flash. The earlier note here claimed
+           only the server knew which plans an application now holds; it does not, because
+           the rule is local: this application has just taken this plan, so on every other
+           plan of this API it is spoken for.
 
-           The reload is what makes the one-plan-per-application rule hold: the server
-           render is the only place that knows every plan this application now holds, so
-           after it the other plan cards disable this application by themselves and no
-           client-side bookkeeping has to agree with the database. The paid flow already
-           ends in a page load for the same reason, and the startup handler at the top of
-           this file was written for both - "if redirected after payment or free flow" -
-           it re-shows the success message from ?subscription=success and strips the param.
-
-           markSubscribedUI still runs first so the card is correct in the moment before
-           navigation commits, and if navigation is ever blocked the UI is not left stale. */
-        markSubscribedUI(card, applicationID, apiId);
-        const reloadUrl = new URL(window.location.href);
-        reloadUrl.searchParams.set('subscription', 'success');
-        window.location.href = reloadUrl.toString();
+           The paid flow still returns through a page load, which is why the ?subscription
+           =success handler at the top of this file stays. */
+        markSubscribedUI(card, applicationID, apiId, policyName);
+        showAlert('Subscribed successfully!', 'success');
         return;
       } else {
         console.error("Failed to create subscription:", responseData);
@@ -888,7 +884,10 @@ function openDeleteModal(subID, orgID, appID, apiRefID) {
     bootstrapModal.show();
 }
 
-function markSubscribedUI(card, applicationID, apiId) {
+/* planName is what the sibling rows have to name once this application is spoken for. It
+   is optional so the older callers keep working; without it the row is still disabled,
+   just without the badge the server render carries. */
+function markSubscribedUI(card, applicationID, apiId, planName) {
   if (!card) return;
 
   const subscriptionFlag = card.querySelector(".subscription-flag");
@@ -902,10 +901,18 @@ function markSubscribedUI(card, applicationID, apiId) {
     }
   }
 
-  // Scope dropdown marking to both modal and card containers (like upstream)
+  /* Scope dropdown marking to a container that holds every plan of this one API. The plan
+     dialog and the listing card are both such a container, as upstream has it.
+
+     The API landing page is neither: its plan cards are siblings in the page, so this fell
+     through to `card` alone and no sibling card ever learned the application was spoken
+     for. That is what actually forced the reload there - not, as the note at the call site
+     used to claim, the server being the only thing that knew. #subscriptionPlans is the
+     section those cards live in, and it is already scoped to the API being viewed. */
   var apiContainer = apiId
     ? (document.getElementById('planModal-' + apiId) || document.getElementById('apiCard-' + apiId))
     : null;
+  if (!apiContainer) apiContainer = card.closest('#subscriptionPlans');
   var allDropdowns = apiContainer
     ? apiContainer.querySelectorAll('.custom-dropdown')
     : card.querySelectorAll('.custom-dropdown');
@@ -923,11 +930,13 @@ function markSubscribedUI(card, applicationID, apiId) {
       if (subscriptionIcon) {
         subscriptionIcon.style.display = "inline-block";
       } else {
-        const subscriptionIconHtml = '<img src="https://raw.githubusercontent.com/wso2/docs-bijira/refs/heads/main/en/devportal-theming/success-rounded.svg"'
-          + ' alt="Subscribed" class="subscription-icon" style="display: inline-block;" />';
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = subscriptionIconHtml;
-        subscriptionIcon = tempDiv.firstElementChild;
+        // Same local asset the server render uses; this used to reach out to
+        // raw.githubusercontent.com for an icon the portal already ships.
+        subscriptionIcon = document.createElement("img");
+        subscriptionIcon.src = "/images/success-rounded.svg";
+        subscriptionIcon.alt = "Subscribed";
+        subscriptionIcon.className = "subscription-icon";
+        subscriptionIcon.style.cssText = "display: inline-block; width: 18px; height: 18px; flex-shrink: 0;";
         appOption.appendChild(subscriptionIcon);
       }
       /* The option stays selectable on its own plan - it is the way back to the
@@ -947,6 +956,27 @@ function markSubscribedUI(card, applicationID, apiId) {
     appOption.classList.add("disabled");
     appOption.setAttribute("aria-disabled", "true");
     appOption.dataset.subscribed = "false";
+
+    /* Say which plan holds it, as the server render does. Without this the row went grey
+       with no reason given, and the only way to learn why was to reload. */
+    if (planName) {
+      const appName = appOption.dataset.appName || "This application";
+      appOption.title = appName + " is already subscribed to this API on the " + planName
+        + " plan. Change that subscription's plan, or use a different application.";
+      const label = appOption.querySelector(".d-flex.flex-column");
+      if (label && !label.querySelector(".plan-held-badge")) {
+        const small = document.createElement("small");
+        small.className = "plan-held-badge";
+        small.style.cssText = "font-size: 11px; margin-top: 3px;";
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.style.cssText = "background-color: #e0f2fe; color: #0369a1; padding: 2px 8px;"
+          + " border-radius: 10px; font-weight: 600; font-size: 10px;";
+        badge.textContent = "On " + planName;
+        small.appendChild(badge);
+        label.appendChild(small);
+      }
+    }
 
     /* Clear it where it was the pending choice, so that card cannot submit a selection
        the server would now refuse. Reached when an application is picked on one plan and

@@ -345,9 +345,22 @@ module.exports = {
         ...over,
     }),
 
+    /* docTypes is the APIDocDTO list the controller passes through - an array of
+       { type, names }, where names are file names and `type` is one of the labels in
+       constants.DOC_TYPES.DOCS. The earlier fixture used an object keyed by type, which
+       Handlebars treats as a context rather than a list: {{#docTypes}} set the context
+       once, {{#names}} found nothing, and the whole sidebar loop never ran. That is why
+       the suite missed a 500 in it - the active-link expression on page.hbs is only
+       reached once an API actually has a document. Both branches of the outer loop are
+       represented, and currentDocType/currentDocName mark one link active. */
     docs: (over = {}) => ({
         ...base,
-        docTypes: { HOWTO: [{ docName: 'getting-started', docId: 'doc-1' }] },
+        docTypes: [
+            { type: 'Specification' },
+            { type: 'HowTo', names: ['getting-started.md', 'authentication.md'] },
+        ],
+        currentDocType: 'HowTo',
+        currentDocName: 'getting-started',
         apiType: 'REST',
         ...over,
     }),
