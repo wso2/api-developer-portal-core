@@ -227,10 +227,21 @@ Handlebars.registerHelper('let', function (name, value, options) {
     return options.fn({ ...options.hash, ...data });
 });
 
+/* Works in both positions. The block form ({{#and a b}}...{{else}}...{{/and}}) renders a
+   branch; the subexpression form ({{#if (and a b)}}) is handed an options object with no
+   fn/inverse and has to be given the boolean instead. Assuming the block form threw
+   "lastArg.inverse is not a function" and 500'd the docs page the moment an API had a
+   document to list - pages/docs/page.hbs marks the active link with {{#if (and ...)}},
+   inside {{#names}}, so the expression is only reached once a document exists.
+   `or` below is value-returning and works only inline; the two are not interchangeable. */
 Handlebars.registerHelper('and', function () {
     const args = Array.prototype.slice.call(arguments);
-    const lastArg = args.pop();
-    return args.every(Boolean) ? lastArg.fn(this) : lastArg.inverse(this);
+    const options = args.pop();
+    const result = args.every(Boolean);
+    if (options && typeof options.fn === 'function') {
+        return result ? options.fn(this) : options.inverse(this);
+    }
+    return result;
 });
 
 Handlebars.registerHelper('or', function (...args) {
