@@ -292,6 +292,7 @@ const generateAPIKeys = async (req, res) => {
         const orgDetails = await invokeGraphQLRequest(req, `${controlPlaneGraphqlUrl}`, query, variables, {});
         const environments = orgDetails?.data?.environments || [];
         const apiHandle = await apiDao.getAPIHandle(orgID, req.body.apiId);
+        const apiMetadataSearch = await apiDao.getAPIMetadataByRefId(orgID, req.body.apiId);
 
         if (!requestBody.keyType || ![constants.KEY_TYPE.PRODUCTION, constants.KEY_TYPE.SANDBOX].includes(requestBody.keyType)) {
             throw new Error('Invalid or missing keyType. Expected ' + constants.KEY_TYPE.PRODUCTION + ' or ' + constants.KEY_TYPE.SANDBOX + '.');
@@ -300,7 +301,22 @@ const generateAPIKeys = async (req, res) => {
         if (!requestBody.name) {
             requestBody.name = apiHandle + "-" + cpAppID + "-" + requestBody.keyType;
         }
-        requestBody.environmentTemplateId = environments.find(env => env.name === 'Production').templateId;
+
+        const isProduction = requestBody.keyType === constants.KEY_TYPE.PRODUCTION;
+
+        // Primary: use the templateId stored in API metadata at publish time (by the APIM-side change).
+        // Fallback: use the original environments-by-name lookup for APIs published before the APIM-side fix.
+        const storedEndpoints = apiMetadataSearch?.endPoints;
+        const storedTemplateId = isProduction
+            ? storedEndpoints?.productionEnvTemplateId
+            : storedEndpoints?.sandboxEnvTemplateId;
+        const envTemplateId = storedTemplateId
+            || environments.find(env => env.name === 'Production')?.templateId;
+
+        if (!envTemplateId) {
+            throw new Error(`No environment found for project ${requestBody.projectID}`);
+        }
+        requestBody.environmentTemplateId = envTemplateId;
         requestBody.applicationId = cpAppID;
         delete requestBody.projectID;
         delete requestBody.devportalAppId;
