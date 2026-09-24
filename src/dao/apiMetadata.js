@@ -1867,6 +1867,21 @@ const getAPIHandle = async (orgID, apiRefID) => {
     }
 }
 
+const getAPIMetadataByRefId = async (orgID, apiRefID) => {
+    try {
+        const api = await APIMetadata.findOne({
+            attributes: ['METADATA_SEARCH'],
+            where: {
+                REFERENCE_ID: apiRefID,
+                ORG_ID: orgID
+            }
+        });
+        return api?.METADATA_SEARCH || null;
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 const getApiIdByReferenceId = async (orgID, referenceId, t) => {
     try {
         const api = await APIMetadata.findOne({
@@ -1943,5 +1958,6 @@ module.exports = {
     deleteImage,
     getAllSubscriptionPolicies,
     getAllAPIMetadataFromAllViews,
-    getApiIdByReferenceId
+    getApiIdByReferenceId,
+    getAPIMetadataByRefId
 };
