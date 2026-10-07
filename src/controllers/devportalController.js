@@ -155,11 +155,16 @@ const deleteApplication = async (req, res) => {
                 throw stripeErr;
             }
 
-            //delete the CP application
-            //TODO: handle non-shared scenarios
-            const app = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
-            if (app.length > 0) {
-                cpAppID = app[0].dataValues.CP_APP_REF;
+            //delete the CP application(s). Mappings created via API key generation are
+            //non-shared, so both shared and non-shared mappings must be considered.
+            const sharedMappings = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
+            const nonSharedMappings = await adminDao.getApplicationKeyMapping(orgID, applicationId, false);
+            const cpAppIDs = new Set(
+                [...sharedMappings, ...nonSharedMappings]
+                    .map((mapping) => mapping.dataValues.CP_APP_REF)
+                    .filter(Boolean)
+            );
+            for (const cpAppID of cpAppIDs) {
                 await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
             }
             const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
