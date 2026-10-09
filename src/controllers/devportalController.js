@@ -157,33 +157,32 @@ const deleteApplication = async (req, res) => {
 
             //delete the CP application(s). Mappings created via API key generation are
             //non-shared, so both shared and non-shared mappings must be considered.
-            const sharedMappings = await adminDao.getApplicationKeyMapping(orgID, applicationId, true);
-            const nonSharedMappings = await adminDao.getApplicationKeyMapping(orgID, applicationId, false);
+            const keyMappings = await adminDao.getApplicationKeyMappings(orgID, applicationId);
             const cpAppIDs = new Set(
-                [...sharedMappings, ...nonSharedMappings]
-                    .map((mapping) => mapping.dataValues.CP_APP_REF)
+                keyMappings
+                    .map((mapping) => mapping.CP_APP_REF)
                     .filter(Boolean)
             );
             for (const cpAppID of cpAppIDs) {
-                await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
-            }
-            const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
-            if (appDeleteResponse === 0) {
-                throw new Sequelize.EmptyResultError("Resource not found to delete");
-            } else {
-                trackAppDeletion({ orgId: orgID, appId: applicationId, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
-                res.status(200).send("Resouce Deleted Successfully");
-            }
-        } catch (error) {
-            if (error.statusCode === 404) {
-                const appDeleteResponse = await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
-                if (appDeleteResponse === 0) {
-                    throw new Sequelize.EmptyResultError("Resource not found to delete");
-                } else {
-                    trackAppDeletion({ orgId: orgID, appId: applicationId, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
-                    return res.status(200).send("Resouce Deleted Successfully");
+                try {
+                    await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+                } catch (cpErr) {
+                    if (cpErr.statusCode === 404) {
+                        //already removed on the control plane, continue with the remaining ones
+                        logger.info('CP application already deleted, skipping', {
+                            orgId: orgID,
+                            appId: applicationId,
+                            cpAppId: cpAppID
+                        });
+                        continue;
+                    }
+                    throw cpErr;
                 }
             }
+            await adminDao.deleteApplication(orgID, applicationId, req.user.sub);
+            trackAppDeletion({ orgId: orgID, appId: applicationId, idpId: req.isAuthenticated() ? (req[constants.USER_ID] || req.user.sub) : undefined }, req);
+            res.status(200).send("Resouce Deleted Successfully");
+        } catch (error) {
             logger.error('Error occurred while deleting the application', {
                 orgId: orgID,
                 appId: applicationId,
