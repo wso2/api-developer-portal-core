@@ -934,6 +934,23 @@ const getApplicationKeyMapping = async (orgID, appID, isSharedToken) => {
     }
 }
 
+const getApplicationKeyMappings = async (orgID, appID) => {
+    try {
+        return await ApplicationKeyMapping.findAll(
+            {
+                where: {
+                    ORG_ID: orgID,
+                    APP_ID: appID
+                }
+            });
+    } catch (error) {
+        if (error instanceof Sequelize.EmptyResultError) {
+            throw error;
+        }
+        throw new Sequelize.DatabaseError(error);
+    }
+}
+
 const getApplicationAPIMapping = async (orgID, appID, apiID, appRefID, isSharedToken) => {
     try {
         return await ApplicationKeyMapping.findAll(
@@ -1338,6 +1355,7 @@ module.exports = {
     getAppApiSubscription,
     getSubscribedAPIs,
     getApplicationKeyMapping,
+    getApplicationKeyMappings,
     createApplicationKeyMapping,
     updateApplicationKeyMapping,
     getApplicationAPIMapping,
