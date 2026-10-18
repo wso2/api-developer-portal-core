@@ -1287,6 +1287,14 @@ const createAppKeyMapping = async (req, res) => {
         ...req.body
     });
     let cpAppID = "";
+    // Local application id, hoisted out of the transaction callback so the catch
+    // block below can clean up the correct rows.
+    let localAppID;
+    // Only roll back the control plane application if THIS request created it.
+    // When an application already has a CP app from an earlier successful key
+    // generation, deleting it here would destroy that app together with its
+    // existing OAuth keys and subscriptions. See wso2-apim-internal#19837.
+    let cpAppCreatedInThisRequest = false;
     try {
         let responseData;
         await sequelize.transaction({
@@ -1297,6 +1305,7 @@ const createAppKeyMapping = async (req, res) => {
             let appID;
             if (appIDResponse) {
                 appID = appIDResponse.dataValues.APP_ID;
+                localAppID = appID;
             } else {
                 return util.handleError(res, new CustomError(404, constants.ERROR_CODE[404], "Application not found"));
             }
@@ -1317,6 +1326,7 @@ const createAppKeyMapping = async (req, res) => {
             } else {
                 const cpAppCreationResponse = await createCPApplication(req, cpApplicationName);
                 cpAppID = cpAppCreationResponse.applicationId;
+                cpAppCreatedInThisRequest = true;
                 //create application mapping entry
                 const appKeyMappping = {
                     orgID: orgID,
@@ -1427,10 +1437,29 @@ const createAppKeyMapping = async (req, res) => {
             stack: error.stack,
             orgId: req.params?.orgId
         });
-        //delete control plane application
-        if (cpAppID) {
-            await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
-            await adminDao.deleteAppMappings(orgID, cpAppID);
+        // Roll back ONLY what this request created. Deleting a pre-existing control
+        // plane application would also destroy OAuth keys and subscriptions that were
+        // created by earlier, successful requests. See wso2-apim-internal#19837.
+        if (cpAppID && cpAppCreatedInThisRequest) {
+            try {
+                await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
+            } catch (cleanupError) {
+                logger.error('Failed to roll back control plane application', {
+                    error: cleanupError.message,
+                    cpAppID,
+                    orgId: req.params?.orgId
+                });
+            }
+            if (localAppID) {
+                // deleteAppMappings matches on the LOCAL application id, not the
+                // control plane reference.
+                await adminDao.deleteAppMappings(orgID, localAppID);
+            }
+        } else if (cpAppID) {
+            logger.warn('Skipping control plane application rollback: the application pre-dates this request', {
+                cpAppID,
+                orgId: req.params?.orgId
+            });
         }
         return util.handleError(res, error);
     }
