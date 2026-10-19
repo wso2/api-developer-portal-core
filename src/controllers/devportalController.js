@@ -163,6 +163,34 @@ const deleteApplication = async (req, res) => {
                     .map((mapping) => mapping.CP_APP_REF)
                     .filter(Boolean)
             );
+            if (cpAppIDs.size === 0) {
+                /* DP_APP_KEY_MAPPING is the only place CP_APP_REF is stored, and unsubscribing
+                   clears those rows - so an application whose subscriptions were removed before
+                   it was deleted leaves nothing here to resolve the control plane application
+                   through, and it would survive with its client ID and secret still valid.
+                   The control plane application is named after the devportal APP_ID
+                   (see createAppKeyMapping), so fall back to resolving it by name. */
+                try {
+                    const cpAppResponse = await invokeApiRequest(req, 'GET', `${controlPlaneUrl}/applications?query=${applicationId}`, {}, {});
+                    for (const cpApp of cpAppResponse?.list || []) {
+                        if (cpApp.name === applicationId && cpApp.applicationId) {
+                            logger.info('Resolved control plane application by name', {
+                                orgId: orgID,
+                                appId: applicationId,
+                                cpAppId: cpApp.applicationId
+                            });
+                            cpAppIDs.add(cpApp.applicationId);
+                        }
+                    }
+                } catch (lookupErr) {
+                    logger.error('Failed to resolve the control plane application by name', {
+                        orgId: orgID,
+                        appId: applicationId,
+                        error: lookupErr.message
+                    });
+                    throw lookupErr;
+                }
+            }
             for (const cpAppID of cpAppIDs) {
                 try {
                     await invokeApiRequest(req, 'DELETE', `${controlPlaneUrl}/applications/${cpAppID}`, {}, {});
