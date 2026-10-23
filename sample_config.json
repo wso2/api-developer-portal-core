@@ -27,7 +27,8 @@
     "url": "https://sts.preview-dv.choreo.dev/api/am/devportal/v2",
     "graphqlURL": "https://app.preview-dv.choreo.dev/graphql",
     "disableCertValidation": true,
-    "pathToCertificate": "./resources/security/client-truststore.pem"
+    "pathToCertificate": "./resources/security/client-truststore.pem",
+    "requestTimeout": 50000
   },
   "aiSDKService": {
     "url": "http://localhost:5001",

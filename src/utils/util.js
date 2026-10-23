@@ -582,7 +582,12 @@ const apiRequest = async (method, url, headers, body, organizationId) => {
         url,
         headers,
         data: body,
-        httpsAgent
+        httpsAgent,
+        // Without an explicit timeout axios waits forever (default 0), so the only
+        // thing that ever ends a stalled control plane call is the ingress proxy
+        // returning a 504 - which the caller cannot distinguish from a real error.
+        // Keep this BELOW the ingress read timeout. See wso2-apim-internal#19837.
+        timeout: config.controlPlane.requestTimeout ?? 50000
     });
     return response;
 };
