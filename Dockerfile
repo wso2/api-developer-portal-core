@@ -1,5 +1,5 @@
-# Use the latest Node.js 22 with Debian Bookworm as the base image
-FROM node:23-bookworm-slim
+# Node.js 22 (active LTS) on Debian Bookworm, pinned so a rebuild is reproducible.
+FROM node:22.23.4-bookworm-slim
 
 # Set a non-interactive frontend to prevent prompts
 ENV DEBIAN_FRONTEND=noninteractive 
