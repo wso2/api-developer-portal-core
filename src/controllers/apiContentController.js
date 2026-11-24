@@ -16,7 +16,7 @@
  * under the License.
  */
 /* eslint-disable no-undef */
-const { renderTemplate, renderTemplateFromAPI, renderGivenTemplate, loadLayoutFromAPI, loadMarkdown, isAiDisabledForPortal } = require('../utils/util');
+const { renderTemplate, renderTemplateFromAPI, loadMarkdown, isAiDisabledForPortal } = require('../utils/util');
 const config = require(process.cwd() + '/config.json');
 const logger = require('../config/logger');
 const { logUserAction } = require('../middlewares/auditLogger');
@@ -32,12 +32,9 @@ const { shouldShowPlatformApiKeysNav } = require('../services/platformApiKeysNav
 const { shouldShowMcpSubscriptionsNav } = require('../services/mcpSubscriptionsNavService');
 const adminService = require('../services/adminService');
 const apiFlowService = require('../services/apiFlowService');
-const subscriptionPolicyDTO = require('../dto/subscriptionPolicy');
 const { ApplicationDTO } = require('../dto/application');
-const APIDTO = require('../dto/apiDTO');
 const { buildSchema, getIntrospectionQuery, graphql: executeGraphQL } = require('graphql');
 const yaml = require('js-yaml');
-const { log } = require('console');
 const controlPlaneUrl = config.controlPlane.url;
 
 const filePrefix = config.pathToContent;
@@ -78,7 +75,6 @@ const loadAPIs = async (req, res) => {
             const tags = req.query.tags;
             let metaDataList = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
             const apiData = await loadAPIMetaDataListFromAPI(req, orgID, orgName, searchTerm, tags, viewName);
-            let appList = [];
             let apiTags = [];
             apiData.forEach(api => {
                 if (api.apiInfo.tags) {
@@ -800,7 +796,7 @@ const loadDocument = async (req, res) => {
                                 modifiedSwagger.components.securitySchemes.ApiKeyAuth = { "type": "apiKey", "name": `${response.apiKeyHeader}`, "in": "header" };
                                 for (let path in modifiedSwagger.paths) {
                                     for (let method in modifiedSwagger.paths[path]) {
-                                        if (modifiedSwagger.paths[path].hasOwnProperty(method)) {
+                                        if (Object.prototype.hasOwnProperty.call(modifiedSwagger.paths[path], method)) {
                                             const operation = modifiedSwagger.paths[path][method];
                                             if (!operation.security) operation.security = [{}];
                                             if (!operation.security[0] || typeof operation.security[0] !== 'object') operation.security[0] = {};
@@ -920,7 +916,6 @@ const loadDocument = async (req, res) => {
                 let docNames = await apiMetadataService.getAPIDocTypes(orgID, apiID);
                 const apiMetadata = await apiDao.getAPIMetadata(orgID, apiID);
                 let apiType = apiMetadata[0].dataValues.API_TYPE;
-                const referenceID = apiMetadata[0].dataValues.REFERENCE_ID;
                 // All MCPs (registry and CP) need a Specification entry in the sidebar
                 if (apiType === constants.API_TYPE.MCP && !docNames.some(d => d.type === constants.DOC_TYPES.DOCS.API_DEFINITION)) {
                     docNames = [{ type: constants.DOC_TYPES.DOCS.API_DEFINITION }, ...docNames];

@@ -1,3 +1,8 @@
+/* These are called from inline handlers and other scripts in the rendered pages. */
+/* exported generateApplicationKey, cleanUp, updateApplicationKey, removeApplicationKey,
+   generateOauthKey, loadKeyGenModal, loadKeysModifyModal, loadKeysInstructionsModal,
+   showAdvanced, togglePasswordVisibility, copyConsumerSecret, copyConsumerKey,
+   copyRealCurl, copyOauthURLs, loadModal */
 async function generateApplicationKey(formId, appId, keyType, keyManager, clientName, subscriptions, orgID, consumerKeyID, consumerSecretID) {
     // Validate required parameters
     if (!formId || !appId || !keyType || !keyManager || !clientName || !subscriptions || !orgID || !consumerKeyID || !consumerSecretID) {
@@ -106,7 +111,6 @@ async function generateApplicationKey(formId, appId, keyType, keyManager, client
         const responseData = await response.json();
         if (response.ok) {
             // close modal
-            const modal = document.getElementById('OauthKeyModal');
             //await showAlert('Application keys generated successfully!', 'success');
             // reload the page to reflect the changes
             // TODO: update the function to handle the response and update the UI accordingly
@@ -416,7 +420,7 @@ function getFormData(formData, keyManager, clientName, appID) {
         let name = checkbox.name.replace("additionalProperties.", "");
         let value = checkbox.checked;
 
-        if (jsonObject.additionalProperties.hasOwnProperty(name)) {
+        if (Object.prototype.hasOwnProperty.call(jsonObject.additionalProperties, name)) {
             delete jsonObject.additionalProperties[name];
         }
         jsonObject.additionalProperties[name] = value;
@@ -841,27 +845,6 @@ async function generateOauthKey(formId, appId, keyMappingId, keyManager, clientN
 document.addEventListener('DOMContentLoaded', () => {
 
     const selectElement = document.getElementById("select-idp-list");
-
-
-    function copyToClipboard(button) {
-        const textToCopy = button.parentElement.querySelector('.endpoint-value').textContent;
-        navigator.clipboard.writeText(textToCopy)
-            .then(() => {
-                // Optional: Show a copied notification
-                const originalSvg = button.innerHTML;
-                button.innerHTML = `
-                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    `;
-                setTimeout(() => {
-                    button.innerHTML = originalSvg;
-                }, 1500);
-            })
-            .catch(err => {
-                console.error('Failed to copy: ', err);
-            });
-    }
 
 
     function updateKeyManagerInfo() {
