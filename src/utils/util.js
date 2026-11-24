@@ -103,7 +103,12 @@ async function loadTemplateFromAPI(orgID, filePath, viewName) {
     return templateContent ? templateContent.FILE_CONTENT.toString(constants.CHARSET_UTF8) : "";
 }
 
-async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName) {
+/**
+ * @param {object} [runtimeOptions] Handlebars runtime options for the page template,
+ *        for example `{ partials: { 'api-content': () => html } }`. Partials given here
+ *        apply to this render only and win over the globally registered ones.
+ */
+async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, viewName, runtimeOptions) {
 
     const templateResponse = fs.readFileSync(path.join(process.cwd(), filePrefix + filePath + '/page.hbs'), constants.CHARSET_UTF8);
     const completeLayoutPath = path.join(process.cwd(), filePrefix + 'layout/main.hbs');
@@ -120,7 +125,7 @@ async function renderTemplateFromAPI(templateContent, orgID, orgName, filePath, 
     const showApiWorkflowsNav = config.features?.apiWorkflows?.enabled === true;
     const enrichedContent = { ...templateContent, showApiWorkflowsNav };
     return layout({
-        body: template(enrichedContent),
+        body: template(enrichedContent, runtimeOptions),
         portalConfigs: config.portalConfigs,
         profile: templateContent.profile,
         showApiWorkflowsNav,

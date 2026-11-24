@@ -20,7 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
 const config = require(process.cwd() + '/config.json');
-const { renderMarkdown } = require('../utils/sanitizer');
+const { renderMarkdown, sanitizeLandingHTML } = require('../utils/sanitizer');
 const adminDao = require('../dao/admin');
 const apiDao = require('../dao/apiMetadata');
 const constants = require('../utils/constants');
@@ -71,7 +71,7 @@ const registerPartials = async (req, res, next) => {
           if (req.originalUrl.includes(constants.ROUTE.API_DOCS_PATH) && req.params.docType && req.params.docName) {
             await registerDocsPageContent(req, orgID, {});
           } else if (req.originalUrl.includes(constants.ROUTE.API_LANDING_PAGE_PATH)) {
-            await registerAPILandingContent(req, orgID, {});
+            await registerAPILandingContent(req, orgID);
           }
         }
       }
@@ -178,7 +178,17 @@ const registerPartialsFromAPI = async (req) => {
   });
 };
 
-async function registerAPILandingContent(req, orgID, partialObject) {
+/*
+ * Renders the API's own landing page HTML (`api-content.hbs`), if it has one, and
+ * leaves the result on `req.apiLandingContentHtml` for the controller to render as
+ * the `api-content` partial.
+ *
+ * The HTML is cleaned up after the template is compiled. It is kept on the request rather than
+ * registered as a global partial: the partial registry is shared by every request
+ * and organization, so a concurrent request could otherwise render this API's
+ * content, or have its own content rendered here.
+ */
+async function registerAPILandingContent(req, orgID) {
 
   const apiHandle = req.params.apiHandle;
   const apiID = await apiDao.getAPIId(orgID, apiHandle);
@@ -205,13 +215,12 @@ async function registerAPILandingContent(req, orgID, partialObject) {
   //if hbs content available for API, render the hbs page
   let additionalAPIContentResponse = await apiDao.getAPIFile(constants.FILE_NAME.API_HBS_CONTENT_FILE_NAME, constants.DOC_TYPES.API_LANDING, orgID, apiID);
   if (additionalAPIContentResponse !== null) {
-    let additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
-    partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = additionalAPIContent ? additionalAPIContent : "";
-    hbs.handlebars.partials[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME] = hbs.handlebars.compile(
-      partialObject[constants.FILE_NAME.API_CONTENT_PARTIAL_NAME])({
-        apiContent: markdownHtml,
-        apiMetadata: metaData
-      });
+    const additionalAPIContent = additionalAPIContentResponse.API_FILE.toString("utf8");
+    const renderedHtml = additionalAPIContent ? hbs.handlebars.compile(additionalAPIContent)({
+      apiContent: markdownHtml,
+      apiMetadata: metaData
+    }) : "";
+    req.apiLandingContentHtml = sanitizeLandingHTML(renderedHtml);
   }
 
 }

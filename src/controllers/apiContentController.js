@@ -516,7 +516,15 @@ const loadAPIContent = async (req, res) => {
             if (metaData.apiInfo.apiType == "MCP") {
                 html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/mcp-landing", viewName);
             } else {
-                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName);
+                /* The API's own landing HTML, already compiled and cleaned up by
+                   registerPartials. Passed for this render only, never through the
+                   shared partial registry, and as a function so Handlebars inserts it
+                   as is instead of compiling the publisher's output a second time. */
+                const landingHtml = req.apiLandingContentHtml;
+                const runtimeOptions = typeof landingHtml === 'string'
+                    ? { partials: { [constants.FILE_NAME.API_CONTENT_PARTIAL_NAME]: () => landingHtml } }
+                    : undefined;
+                html = await renderTemplateFromAPI(templateContent, orgID, orgName, "pages/api-landing", viewName, runtimeOptions);
             }
         } catch (error) {
             logger.error(`Failed to load api content`, {
