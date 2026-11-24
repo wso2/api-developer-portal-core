@@ -15,7 +15,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-/* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
 const exphbs = require('express-handlebars');
@@ -100,11 +99,6 @@ const registerPartials = async (req, res, next) => {
 
 const registerInternalPartials = async (req) => {
 
-  let isAdmin, isSuperAdmin = false;
-  if (req.user) {
-    isAdmin = req.user["isAdmin"];
-    isSuperAdmin = req.user["isSuperAdmin"];
-  }
   const partialsDir = path.join(path.join(require.main.filename, '..', '/pages/partials'));
   const getDirectories = source =>
     fs.readdirSync(source, { withFileTypes: true })
