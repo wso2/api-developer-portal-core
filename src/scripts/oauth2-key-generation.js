@@ -1129,6 +1129,18 @@ async function copyToken(btnOrTokenId, maybeTokenId) {
     }
 }
 
+/*
+ * Copy buttons inside an API's own landing page HTML. The server rewrites the
+ * console template's `onclick="copyToken(this, 'id')"` to `data-copy-target="id"`;
+ * this listener handles those buttons.
+ */
+document.addEventListener('click', (event) => {
+    const btn = event.target.closest && event.target.closest('[data-copy-target]');
+    if (btn) {
+        copyToken(btn, btn.getAttribute('data-copy-target'));
+    }
+});
+
 /**
  * Toggles password visibility for the specified input field
  * @param {string} inputId - The ID of the input field

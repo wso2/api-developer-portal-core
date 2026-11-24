@@ -82,6 +82,50 @@ const MARKDOWN_SANITIZE_OPTIONS = {
     }
 };
 
+/*
+ * API landing page HTML (`api-content.hbs`) comes from the console and goes
+ * through the same cleanup as markdown. It is a full page section rather than
+ * prose, so the profile also allows layout tags, buttons, `style` and
+ * `data-*`/`aria-*` attributes, which the console's default template uses.
+ */
+const LANDING_ALLOWED_TAGS = ALLOWED_TAGS.concat([
+    'section', 'article', 'header', 'footer', 'nav', 'main', 'aside', 'button'
+]);
+
+const LANDING_ALLOWED_ATTRIBUTES = {
+    ...ALLOWED_ATTRIBUTES,
+    button: ['type', 'name', 'value', 'disabled'],
+    '*': ALLOWED_ATTRIBUTES['*'].concat(['style', 'role', 'tabindex', 'data-*', 'aria-*'])
+};
+
+/*
+ * The console's default landing template wires its copy buttons with
+ * `onclick="copyToken(this, 'api_prod_url')"`. Inline attributes like `onclick` are
+ * not kept, so this exact call is turned into `data-copy-target`, which a delegated
+ * listener in oauth2-key-generation.js handles. Stored landing pages keep working
+ * copy buttons without being republished.
+ */
+const COPY_TOKEN_HANDLER = /^\s*copyToken\(\s*this\s*,\s*'([A-Za-z0-9_-]+)'\s*\)\s*;?\s*$/;
+
+function keepCopyTokenButton(tagName, attribs) {
+
+    const match = COPY_TOKEN_HANDLER.exec(attribs.onclick || '');
+    if (match) {
+        return { tagName, attribs: { ...attribs, 'data-copy-target': match[1] } };
+    }
+    return { tagName, attribs };
+}
+
+const LANDING_SANITIZE_OPTIONS = {
+    ...MARKDOWN_SANITIZE_OPTIONS,
+    allowedTags: LANDING_ALLOWED_TAGS,
+    allowedAttributes: LANDING_ALLOWED_ATTRIBUTES,
+    transformTags: {
+        ...MARKDOWN_SANITIZE_OPTIONS.transformTags,
+        button: keepCopyTokenButton
+    }
+};
+
 // A same-document fragment reference such as `#icon`. Anything carrying a scheme,
 // a path or whitespace is rejected, so `javascript:`, `data:` and cross-document
 // references can never reach a rendered `<use>`.
@@ -178,6 +222,23 @@ function renderMarkdown(markdownContent, options) {
 }
 
 /**
+ * Clean up the rendered HTML of an API landing page (`api-content.hbs`).
+ *
+ * Run it on the output of the compiled template, not on the template source, so it
+ * sees the final HTML.
+ *
+ * @param {string} html rendered landing page HTML
+ * @returns {string} cleaned HTML
+ */
+function sanitizeLandingHTML(html) {
+
+    if (html === null || html === undefined || html === '') {
+        return '';
+    }
+    return sanitizeHtml(String(html), LANDING_SANITIZE_OPTIONS);
+}
+
+/**
  * Strip scripting constructs from an SVG document so it can be served safely
  * from the portal origin.
  *
@@ -195,6 +256,7 @@ function sanitizeSVG(svgContent) {
 
 module.exports = {
     sanitizeHTML,
+    sanitizeLandingHTML,
     renderMarkdown,
     sanitizeSVG
 };
