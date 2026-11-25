@@ -30,8 +30,46 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const logger = require('../config/logger');
 const qs = require('qs');
+const { checkOrgAccess } = require('./orgAccess');
 
-function enforceSecuirty(scope) {
+/*
+ * Resolve the organization in the path for the signed-in user.
+ * Returns true when the request may continue; otherwise sends a 403 and returns false.
+ */
+async function authorizeOrgAccess(req, res, tokenClaims, options) {
+    const decision = await checkOrgAccess({
+        req,
+        tokenClaims,
+        orgClaimName: config.orgIDClaim,
+        platformOnly: options.platformOnly,
+        lockOrgIdentity: options.lockOrgIdentity,
+        findOrgsByRef: adminDao.findOrganizationsByAnyRef
+    });
+    if (decision.allowed) {
+        return true;
+    }
+    logger.warn('Organization not resolved for request', {
+        operation: 'orgAccessCheck',
+        reason: decision.reason,
+        method: req.method,
+        path: req.originalUrl,
+        targetOrgRef: decision.targetOrgRef,
+        userId: req.user?.[constants.USER_ID] || tokenClaims?.[constants.USER_ID],
+        userOrg: req.user?.userOrg || tokenClaims?.organization?.uuid
+    });
+    util.handleError(res, new CustomError(decision.status, constants.ERROR_CODE[403], constants.ERROR_MESSAGE.FORBIDDEN));
+    return false;
+}
+
+/**
+ * @param {string} scope
+ * @param {object} [options]
+ * @param {boolean} [options.platformOnly] reserve the route for platform callers
+ *        (API key, mTLS, config basic auth, or a config-defined super admin)
+ * @param {boolean} [options.lockOrgIdentity] keep the organization's core fields
+ *        unchanged on update (see orgAccess.LOCKED_ORG_FIELDS)
+ */
+function enforceSecuirty(scope, options = {}) {
     return async function (req, res, next) {
         try {
             const rules = util.validateRequestParameters();
@@ -44,6 +82,9 @@ function enforceSecuirty(scope) {
             }
             // Config-auth users: authenticated with no token — allow through directly
             if (req.isAuthenticated() && req.user && req.user.isLocalAuth && !config.identityProvider?.clientId) {
+                if (!(await authorizeOrgAccess(req, res, undefined, options))) {
+                    return;
+                }
                 return next();
             }
             const token = accessTokenPresent(req);
@@ -61,7 +102,12 @@ function enforceSecuirty(scope) {
                         return next(err);
                     }
                 }
-                // TODO: Implement organization extraction logic
+                // Resolve the organization in the path. Token claims are read here and
+                // the token is validated by validateAuthentication below.
+                const tokenClaims = req.user ? undefined : jwt.decode(token);
+                if (!(await authorizeOrgAccess(req, res, tokenClaims, options))) {
+                    return;
+                }
                 validateAuthentication(scope)(req, res, next);
                 //set user ID
                 const decodedAccessToken = jwt.decode(token);
