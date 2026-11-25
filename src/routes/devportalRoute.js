@@ -40,9 +40,14 @@ const platformSubscriptionService = require('../services/platformSubscriptionSer
 const platformApiKeyService = require('../services/platformApiKeyService');
 const apiFlowService = require('../services/apiFlowService');
 
-router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.createOrganization);
-router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN), adminService.getOrganizations);
-router.put('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), adminService.updateOrganization);
+// Organization handling for these routes is in middlewares/orgAccess.js. Listing and
+// creating organizations are platform-level operations.
+const PLATFORM_ONLY = { platformOnly: true };
+const LOCK_ORG_IDENTITY = { lockOrgIdentity: true };
+
+router.post('/organizations', enforceSecuirty(constants.SCOPES.ADMIN, PLATFORM_ONLY), adminService.createOrganization);
+router.get('/organizations', enforceSecuirty(constants.SCOPES.ADMIN, PLATFORM_ONLY), adminService.getOrganizations);
+router.put('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN, LOCK_ORG_IDENTITY), adminService.updateOrganization);
 router.get('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), devportalService.getOrganization); // S2S Applied 
 router.delete('/organizations/:orgId', enforceSecuirty(constants.SCOPES.ADMIN), adminService.deleteOrganization);
 

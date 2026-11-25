@@ -62,7 +62,9 @@ const loadOrgSettingsPage = async (req, res) => {
             orgID = await adminDao.getOrgId(orgName);
             templateContent.orgID = orgID;
 
-            const organizations = await adminService.getAllOrganizations();
+            // This page manages the current organization; the full list is on /portal.
+            const organizations = (await adminService.getAllOrganizations())
+                .filter((org) => org.orgID === orgID);
             if (organizations.length > 0) {
                 templateContent.organizations = organizations;
             }

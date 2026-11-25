@@ -83,6 +83,25 @@ const getOrganization = async (param) => {
     }
 };
 
+// Every organization whose ORG_ID, ORG_HANDLE, ORG_NAME or ORGANIZATION_IDENTIFIER equals
+// the given value.
+const findOrganizationsByAnyRef = async (ref) => {
+    try {
+        return await Organization.findAll({
+            where: {
+                [Sequelize.Op.or]: [
+                    { ORG_ID: ref },
+                    { ORG_HANDLE: ref },
+                    { ORG_NAME: ref },
+                    { ORGANIZATION_IDENTIFIER: ref }
+                ]
+            }
+        });
+    } catch (error) {
+        throw new Sequelize.DatabaseError(error);
+    }
+};
+
 const getOrgId = async (orgName) => {
     try {
         const organization = await Organization.findOne({
@@ -1331,6 +1350,7 @@ module.exports = {
     deleteIdentityProvider,
     getOrgId,
     getOrganizations,
+    findOrganizationsByAnyRef,
     createProvider,
     deleteProviderProperty,
     deleteProvider,
