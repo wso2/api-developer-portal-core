@@ -227,7 +227,6 @@ const updateIdentityProvider = async (orgID, idpData) => {
     try {
         const [updatedRowsCount, idpContent] = await IdentityProvider.update(
             {
-                ORG_ID: idpData.orgId,
                 ISSUER: idpData.issuer,
                 NAME: idpData.name,
                 AUTHORIZATION_URL: idpData.authorizationURL,

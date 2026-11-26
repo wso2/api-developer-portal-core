@@ -291,6 +291,10 @@ const updateIdentityProvider = async (req, res) => {
         if (!orgId) {
             throw new CustomError(400, "Bad Request", "Missing required parameter: 'orgId'");
         }
+        // The identity provider belongs to the organization in the path.
+        if (idpData.orgId !== undefined && idpData.orgId !== orgId) {
+            throw new CustomError(400, "Bad Request", "'orgId' in the body must match the organization in the path");
+        }
         const rules = util.validateIDP();
         for (let validation of rules) {
             await validation.run(req);
