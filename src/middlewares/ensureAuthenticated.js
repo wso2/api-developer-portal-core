@@ -42,6 +42,7 @@ async function authorizeOrgAccess(req, res, tokenClaims, options) {
         tokenClaims,
         orgClaimName: config.orgIDClaim,
         platformOnly: options.platformOnly,
+        adminOnly: options.adminOnly,
         lockOrgIdentity: options.lockOrgIdentity,
         findOrgsByRef: adminDao.findOrganizationsByAnyRef
     });
@@ -62,14 +63,15 @@ async function authorizeOrgAccess(req, res, tokenClaims, options) {
 }
 
 /**
- * @param {string} scope
- * @param {object} [options]
- * @param {boolean} [options.platformOnly] reserve the route for platform callers
+ * @param {string} scope  ADMIN routes are for admins of the signed-in organization
+ * @param {object} [routeOptions]
+ * @param {boolean} [routeOptions.platformOnly] reserve the route for platform callers
  *        (API key, mTLS, config basic auth, or a config-defined super admin)
- * @param {boolean} [options.lockOrgIdentity] keep the organization's core fields
+ * @param {boolean} [routeOptions.lockOrgIdentity] keep the organization's core fields
  *        unchanged on update (see orgAccess.LOCKED_ORG_FIELDS)
  */
-function enforceSecuirty(scope, options = {}) {
+function enforceSecuirty(scope, routeOptions = {}) {
+    const options = { ...routeOptions, adminOnly: scope === constants.SCOPES.ADMIN };
     return async function (req, res, next) {
         try {
             const rules = util.validateRequestParameters();

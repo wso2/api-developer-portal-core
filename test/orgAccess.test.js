@@ -131,6 +131,51 @@ test('organization update requires the current handle', () => {
     assert.deepEqual(getChangedLockedFields({ businessOwner: 'x' }, ORG_A), ['orgHandle']);
 });
 
+test('admin routes are available to an admin of the signed-in organization', async () => {
+    const user = sessionUser('choreo-org-a', { isAdmin: true });
+    assert.equal((await check({ params: { orgId: ORG_A.ORG_ID }, user }, { adminOnly: true })).allowed, true);
+});
+
+test('admin routes are not available to other members of the organization', async () => {
+    const decision = await check({ params: { orgId: ORG_A.ORG_ID }, user: sessionUser('choreo-org-a') }, { adminOnly: true });
+    assert.equal(decision.allowed, false);
+    assert.equal(decision.status, 403);
+});
+
+test('admin routes use the signed-in organization of a user with several organizations', async () => {
+    const user = { userOrg: 'choreo-org-b', authorizedOrgs: ['choreo-org-a', 'choreo-org-b'], isAdmin: true };
+    assert.equal((await check({ params: { orgId: ORG_B.ORG_ID }, user }, { adminOnly: true })).allowed, true);
+    assert.equal((await check({ params: { orgId: ORG_A.ORG_ID }, user }, { adminOnly: true })).allowed, false);
+});
+
+test('admin routes fall back to the organization claim when there is no signed-in organization', async () => {
+    const user = { orgClaimName: 'choreo-org-a', isAdmin: true };
+    assert.equal((await check({ params: { orgId: ORG_A.ORG_ID }, user }, { adminOnly: true })).allowed, true);
+});
+
+test('admin routes without an organization in the path need an admin', async () => {
+    const member = await check({ params: {}, user: sessionUser('choreo-org-a') }, { adminOnly: true });
+    assert.equal(member.allowed, false);
+    const admin = await check({ params: {}, user: sessionUser('choreo-org-a', { isAdmin: true }) }, { adminOnly: true });
+    assert.equal(admin.allowed, true);
+});
+
+test('admin routes are available to a super admin', async () => {
+    const user = sessionUser('choreo-org-a', { isSuperAdmin: true });
+    assert.equal((await check({ params: { orgId: ORG_A.ORG_ID }, user }, { adminOnly: true })).allowed, true);
+});
+
+test('admin routes for bearer tokens are resolved by token claims', async () => {
+    const req = { params: { orgId: ORG_A.ORG_ID } };
+    const decision = await check(req, { adminOnly: true, tokenClaims: { organization: { uuid: 'choreo-org-a' } } });
+    assert.equal(decision.allowed, true);
+});
+
+test('developer routes stay available to members', async () => {
+    const decision = await check({ params: { orgId: ORG_A.ORG_ID }, user: sessionUser('choreo-org-a') });
+    assert.equal(decision.allowed, true);
+});
+
 test('user organizations ignore empty and non-string values', () => {
     const orgs = getCallerOrgs({ userOrg: '', authorizedOrgs: ['choreo-org-a', null, 7] });
     assert.deepEqual([...orgs], ['choreo-org-a']);

@@ -108,6 +108,17 @@ const getCallerOrgs = (user, tokenClaims, orgClaimName) => {
 };
 
 /**
+ * The organization the session is signed in to. Admin details on the session
+ * (isAdmin) are for this organization.
+ */
+const getActiveOrg = (user) => {
+    const org = user.userOrg || user[ORGANIZATION_CLAIM];
+    return typeof org === 'string' ? org.trim() : '';
+};
+
+const isAdmin = (user) => Boolean(user.isAdmin || user.isSuperAdmin);
+
+/**
  * Resolve the organization in the request path for the signed-in user.
  *
  * @param {object}   options
@@ -115,13 +126,15 @@ const getCallerOrgs = (user, tokenClaims, orgClaimName) => {
  * @param {object}   [options.tokenClaims]   decoded bearer token claims (no-session callers)
  * @param {string}   [options.orgClaimName]
  * @param {boolean}  [options.platformOnly]  route is reserved for platform callers
+ * @param {boolean}  [options.adminOnly]     route is for administrators; a session user must be
+ *                                           an admin of the organization they are signed in to
  * @param {boolean}  [options.lockOrgIdentity] reject body changes to LOCKED_ORG_FIELDS
  * @param {Function} options.findOrgsByRef   async (ref) => org rows matching the ref on any
  *                                           identifying column (ORG_ID, ORG_HANDLE, ORG_NAME,
  *                                           ORGANIZATION_IDENTIFIER)
  * @returns {Promise<{allowed: boolean, status?: number, reason?: string, targetOrgRef?: string}>}
  */
-const checkOrgAccess = async ({ req, tokenClaims, orgClaimName, platformOnly, lockOrgIdentity, findOrgsByRef }) => {
+const checkOrgAccess = async ({ req, tokenClaims, orgClaimName, platformOnly, adminOnly, lockOrgIdentity, findOrgsByRef }) => {
     const user = req.user;
 
     if (platformOnly) {
@@ -134,6 +147,9 @@ const checkOrgAccess = async ({ req, tokenClaims, orgClaimName, platformOnly, lo
     }
 
     const targetOrgRef = getTargetOrgRef(req);
+    if (adminOnly && user && !isAdmin(user)) {
+        return { allowed: false, status: 403, reason: 'admin role required', targetOrgRef };
+    }
     if (!targetOrgRef) {
         return { allowed: true };
     }
@@ -152,6 +168,14 @@ const checkOrgAccess = async ({ req, tokenClaims, orgClaimName, platformOnly, lo
     const ownsAll = orgs.every((org) => callerOrgs.has(org.ORGANIZATION_IDENTIFIER));
     if (!ownsAll) {
         return { allowed: false, status: 403, reason: 'organization does not match user', targetOrgRef };
+    }
+    if (adminOnly && user) {
+        // The admin role is known for the signed-in organization only; the user
+        // opens that organization's portal to manage it.
+        const activeOrg = getActiveOrg(user);
+        if (!activeOrg || !orgs.every((org) => org.ORGANIZATION_IDENTIFIER === activeOrg)) {
+            return { allowed: false, status: 403, reason: 'not the signed-in organization', targetOrgRef };
+        }
     }
 
     if (lockOrgIdentity) {
